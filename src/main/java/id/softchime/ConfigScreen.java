@@ -1,11 +1,13 @@
 package id.softchime;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -13,168 +15,370 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/** Settings panel with two tabs (Sound / Effects). Open with N, or from Options. */
+/** Custom-drawn settings panel (Sound / Effects tabs). Open with N or from the Options screen. */
 public class ConfigScreen extends Screen {
-	private static final int GOLD = 0xFFFFD866;
-	private static final int PANEL = 0xF0151826;
-	private static final int MUTED = 0xFF9AA3C7;
+	// palette taken from the mod icon
+	private static final int CARD = 0xFF221C45, CARD2 = 0xFF2D2659, CARD3 = 0xFF3A3170, DEEP = 0xFF1A1538;
+	private static final int MINT = 0xFF6BF5D0, YEL = 0xFFFFD866, PINK = 0xFFFF5FA2, WHITE = 0xFFFFFFFF;
+	private static final int MUTED = 0xFFA79FD6, OFF = 0xFF4A4378;
+
+	private static final String[] NAMES = {"Soft Chime", "Bubble Pop", "Marimba", "Crystal", "Retro Chip", "Soft Tap"};
+	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap"};
+	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK};
+
+	private record Hit(int x, int y, int w, int h, int id) {
+		boolean in(double mx, double my) { return mx >= x && mx < x + w && my >= y && my < y + h; }
+	}
+	private record Toggle(String label, Supplier<Boolean> get, Consumer<Boolean> set) {}
 
 	private final Screen parent;
 	private int tab = 0;
-	private int px, py, pw, ph;
-	private int tabX, tabY, tabW, tabH;
-	private int labelX, labelY;
-	private final List<int[]> cardRects = new ArrayList<>(); // x, y, w, h
-	private final List<SoundStyle> cardStyles = new ArrayList<>();
+	private int px, py, pw, ph, headerH;
+	private boolean hint;
+	private final List<Hit> hits = new ArrayList<>();
+	private final List<Toggle> toggles = new ArrayList<>();
+	private int sx, sy, sw; // volume track
+	private boolean dragging;
+	private int lastTickStep = -1;
+
+	private float tabPos = 0;
+	private final float[] hoverT = new float[8];
+	private final float[] pulse = new float[8];
+	private final float[] swT = new float[12];
+	private int hoverId = -1;
+	private final long startNs = System.nanoTime();
+	private long lastNs = startNs;
 
 	public ConfigScreen(Screen parent) {
 		super(Component.literal("Soft Chime UI"));
 		this.parent = parent;
 	}
 
-	private static void click() { Sounds.play(Sounds.Type.CLICK); }
-
-	private static Component onOff(String label, boolean v) {
-		return Component.literal(label + "  ")
-			.append(Component.literal(v ? "ON" : "OFF").withStyle(v ? ChatFormatting.GREEN : ChatFormatting.RED));
-	}
-
-	private Button toggle(int x, int y, int w, int h, String label, Supplier<Boolean> get, Consumer<Boolean> set) {
-		return Button.builder(onOff(label, get.get()), b -> {
-			set.accept(!get.get());
-			b.setMessage(onOff(label, get.get()));
-			Config.save();
-			click();
-		}).bounds(x, y, w, h).build();
-	}
-
+	// ---------------------------------------------------------------- layout
 	@Override
 	protected void init() {
 		Config c = Config.INSTANCE;
-		cardRects.clear();
-		cardStyles.clear();
+		toggles.clear();
+		toggles.add(new Toggle("Click sound", () -> c.clickSound, v -> c.clickSound = v));
+		toggles.add(new Toggle("Open / close sound", () -> c.openCloseSound, v -> c.openCloseSound = v));
+		toggles.add(new Toggle("Hover sound", () -> c.hoverSound, v -> c.hoverSound = v));
+		toggles.add(new Toggle("Cursor ring", () -> c.cursorRing, v -> c.cursorRing = v));
+		toggles.add(new Toggle("Click effect", () -> c.clickParticles, v -> c.clickParticles = v));
+		toggles.add(new Toggle("Animations", () -> c.animations, v -> c.animations = v));
+		if (UiFx.REANIMATED) toggles.add(new Toggle("ReAnimated compat", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v));
+		toggles.add(new Toggle("Options button", () -> c.optionsButton, v -> c.optionsButton = v));
+		for (int i = 0; i < toggles.size(); i++) swT[i] = toggles.get(i).get().get() ? 1f : 0f;
+		layout();
+	}
 
-		boolean compact = this.height < 240;
-		int rowH = compact ? 18 : 20;
-		int cardH = compact ? 22 : 28;
-		pw = Math.min(this.width - 12, 330);
-		int innerX = 0, innerW = pw - 20;
-
-		int effectCount = UiFx.REANIMATED ? 8 : 7;
+	private void layout() {
+		hits.clear();
+		boolean compact = this.height < 275;
+		headerH = compact ? 40 : 46;
+		int cardH = compact ? 24 : 28;
+		hint = !compact;
 		int content = tab == 0
-			? 12 + 2 * cardH + 4 + 10 + rowH + 6 + rowH
-			: ((effectCount + 1) / 2) * (rowH + 4);
-		ph = 10 + 14 + 8 + 20 + 8 + content + 10 + rowH + 10;
+			? 11 + 2 * cardH + 4 + 8 + 26 + 6 + 18
+			: ((toggles.size() + 1) / 2) * 26;
+		ph = headerH + 28 + content + 8 + 22 + (hint ? 14 : 8) + 4;
+		if (ph > this.height - 4) { cardH = 22; hint = false; ph = headerH + 28 + (tab == 0 ? 11 + 2 * cardH + 4 + 8 + 26 + 6 + 18 : ((toggles.size() + 1) / 2) * 26) + 8 + 22 + 8 + 4; }
+		pw = Math.min(this.width - 10, 340);
 		px = (this.width - pw) / 2;
 		py = Math.max(2, (this.height - ph) / 2);
-		innerX = px + 10;
+		int ix = px + 12, iw = pw - 24;
 
-		// tabs
-		tabX = innerX; tabY = py + 32; tabW = (innerW - 4) / 2; tabH = 20;
-		addRenderableWidget(Button.builder(Component.literal("Sound"), b -> { tab = 0; click(); rebuildWidgets(); })
-			.bounds(tabX, tabY, tabW, tabH).build());
-		addRenderableWidget(Button.builder(Component.literal("Effects"), b -> { tab = 1; click(); rebuildWidgets(); })
-			.bounds(tabX + tabW + 4, tabY, tabW, tabH).build());
+		hits.add(new Hit(px + pw - 22, py + 6, 16, 16, 51)); // close
+		int tabY = py + headerH;
+		int tw = (iw - 4) / 2;
+		hits.add(new Hit(ix, tabY, tw + 2, 20, 0));
+		hits.add(new Hit(ix + tw + 2, tabY, iw - tw - 2, 20, 1));
 
-		int y = tabY + tabH + 8;
+		int y = tabY + 28;
 		if (tab == 0) {
-			labelX = innerX; labelY = y + 1;
-			y += 12;
-			SoundStyle[] styles = SoundStyle.values();
-			int cw = (innerW - 8) / 3;
-			for (int i = 0; i < styles.length; i++) {
-				SoundStyle st = styles[i];
-				int cx = innerX + (i % 3) * (cw + 4);
-				int cy = y + (i / 3) * (cardH + 2);
-				addRenderableWidget(Button.builder(Component.literal(st.label.replace(" (Default)", "")), b -> {
-					c.style = st.name();
-					Config.save();
-					Sounds.play(st, Sounds.Type.CLICK); // instant preview of the style you picked
-				}).bounds(cx, cy, cw, cardH).build());
-				cardRects.add(new int[]{cx, cy, cw, cardH});
-				cardStyles.add(st);
-			}
-			y += 2 * cardH + 4 + 10;
-
-			addRenderableWidget(new AbstractSliderButton(innerX, y, innerW, rowH, volText(), c.volume) {
-				@Override protected void updateMessage() { setMessage(volText()); }
-				@Override protected void applyValue() { c.volume = (float) this.value; Config.save(); }
-			});
-			y += rowH + 6;
-
-			int pwid = (innerW - 12) / 4;
-			String[] names = {"Click", "Open", "Close", "Hover"};
-			Sounds.Type[] types = {Sounds.Type.CLICK, Sounds.Type.OPEN, Sounds.Type.CLOSE, Sounds.Type.HOVER};
-			for (int i = 0; i < 4; i++) {
-				Sounds.Type t = types[i];
-				addRenderableWidget(Button.builder(Component.literal("▶ " + names[i]), b -> Sounds.play(t))
-					.bounds(innerX + i * (pwid + 4), y, pwid, rowH).build());
-			}
+			y += 11;
+			int cw = (iw - 8) / 3;
+			for (int i = 0; i < 6; i++)
+				hits.add(new Hit(ix + (i % 3) * (cw + 4), y + (i / 3) * (cardH + 4), cw, cardH, 10 + i));
+			y += 2 * cardH + 4 + 8;
+			sx = ix; sy = y + 12; sw = iw;
+			hits.add(new Hit(ix, y, iw, 26, 20));
+			y += 26 + 6;
+			int chw = (iw - 12) / 4;
+			for (int i = 0; i < 4; i++) hits.add(new Hit(ix + i * (chw + 4), y, chw, 18, 30 + i));
 		} else {
-			int cw = (innerW - 4) / 2;
-			List<Button> list = new ArrayList<>();
-			list.add(toggle(0, 0, cw, rowH, "Click sound", () -> c.clickSound, v -> c.clickSound = v));
-			list.add(toggle(0, 0, cw, rowH, "Open/close sound", () -> c.openCloseSound, v -> c.openCloseSound = v));
-			list.add(toggle(0, 0, cw, rowH, "Hover sound", () -> c.hoverSound, v -> c.hoverSound = v));
-			list.add(toggle(0, 0, cw, rowH, "Cursor ring", () -> c.cursorRing, v -> c.cursorRing = v));
-			list.add(toggle(0, 0, cw, rowH, "Click effect", () -> c.clickParticles, v -> c.clickParticles = v));
-			list.add(toggle(0, 0, cw, rowH, "Animations", () -> c.animations, v -> c.animations = v));
-			if (UiFx.REANIMATED)
-				list.add(toggle(0, 0, cw, rowH, "ReAnimated compat", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v));
-			list.add(toggle(0, 0, cw, rowH, "Options button", () -> c.optionsButton, v -> c.optionsButton = v));
-			for (int i = 0; i < list.size(); i++) {
-				Button b = list.get(i);
-				b.setX(innerX + (i % 2) * (cw + 4));
-				b.setY(y + (i / 2) * (rowH + 4));
-				addRenderableWidget(b);
-			}
+			int cw = (iw - 4) / 2;
+			for (int i = 0; i < toggles.size(); i++)
+				hits.add(new Hit(ix + (i % 2) * (cw + 4), y + (i / 2) * 26, cw, 22, 40 + i));
 		}
-
-		addRenderableWidget(Button.builder(Component.literal("Done"), b -> { click(); onClose(); })
-			.bounds(innerX, py + ph - 10 - rowH, innerW, rowH).build());
+		hits.add(new Hit(ix, py + ph - (hint ? 14 : 8) - 4 - 22, iw, 22, 50)); // done
 	}
 
-	private Component volText() { return Component.literal("Volume: " + Math.round(Config.INSTANCE.volume * 100) + "%"); }
+	private Hit hit(int id) {
+		for (Hit h : hits) if (h.id == id) return h;
+		return null;
+	}
+
+	private int hitAt(double mx, double my) {
+		for (Hit h : hits) if (h.in(mx, my)) return h.id;
+		return -1;
+	}
+
+	// ---------------------------------------------------------------- input
+	private static void click() { Sounds.play(Sounds.Type.CLICK); }
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float delta) {
-		extractTransparentBackground(g);
+	public boolean mouseClicked(MouseButtonEvent e, boolean dbl) {
+		if (e.button() != 0) return super.mouseClicked(e, dbl);
+		int id = hitAt(e.x(), e.y());
+		if (id < 0) return super.mouseClicked(e, dbl);
+		Config c = Config.INSTANCE;
+		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
+		else if (id >= 10 && id < 16) {
+			SoundStyle st = SoundStyle.values()[id - 10];
+			c.style = st.name(); Config.save();
+			pulse[id - 10] = 1f;
+			Sounds.play(st, Sounds.Type.CLICK); // instant preview of the style you picked
+		} else if (id == 20) { dragging = true; setVolumeFrom(e.x()); }
+		else if (id >= 30 && id < 34) Sounds.play(Sounds.Type.values()[new int[]{0, 1, 2, 3}[id - 30]]);
+		else if (id >= 40 && id < 40 + toggles.size()) {
+			Toggle t = toggles.get(id - 40);
+			t.set.accept(!t.get.get()); Config.save(); click();
+		} else if (id == 50 || id == 51) { click(); onClose(); }
+		return true;
+	}
+
+	private void setVolumeFrom(double mx) {
+		float v = (float) Math.max(0, Math.min(1, (mx - sx) / (double) sw));
+		Config.INSTANCE.volume = Math.round(v * 20) / 20f; // 5% steps
+		int step = Math.round(Config.INSTANCE.volume * 20);
+		if (step != lastTickStep) { lastTickStep = step; Sounds.play(Sounds.Type.TICK); }
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
-		// panel
-		g.fill(px - 2, py - 2, px + pw + 2, py + ph + 2, 0x66000000);
-		g.fill(px, py, px + pw, py + ph, PANEL);
-		g.fillGradient(px, py, px + pw, py + 30, 0xFF2C3150, PANEL);
-		g.fill(px, py, px + pw, py + 2, GOLD);
-		g.outline(px, py, pw, ph, 0x66FFD866);
+	public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+		if (dragging) { setVolumeFrom(e.x()); return true; }
+		return super.mouseDragged(e, dx, dy);
+	}
 
-		// title
-		g.centeredText(getFont(), Component.literal("Soft Chime UI").withStyle(ChatFormatting.BOLD), px + pw / 2, py + 9, GOLD);
+	@Override
+	public boolean mouseReleased(MouseButtonEvent e) {
+		if (dragging) { dragging = false; lastTickStep = -1; Config.save(); return true; }
+		return super.mouseReleased(e);
+	}
 
-		super.extractRenderState(g, mx, my, delta); // buttons, slider
-
-		// active tab underline
-		int ux = tab == 0 ? tabX : tabX + tabW + 4;
-		g.fill(ux, tabY + tabH, ux + tabW, tabY + tabH + 2, GOLD);
-
-		if (tab == 0) {
-			g.text(getFont(), "SOUND STYLE  (tap to preview)", labelX, labelY, MUTED);
-			SoundStyle cur = Config.INSTANCE.style();
-			for (int i = 0; i < cardRects.size(); i++) {
-				if (cardStyles.get(i) == cur) {
-					int[] r = cardRects.get(i);
-					g.outline(r[0] - 1, r[1] - 1, r[2] + 2, r[3] + 2, GOLD);
-					g.outline(r[0], r[1], r[2], r[3], 0xFFFFFFFF);
-				}
-			}
-		}
+	@Override
+	public boolean keyPressed(KeyEvent e) {
+		if (e.key() == InputConstants.KEY_N) { onClose(); return true; }
+		return super.keyPressed(e);
 	}
 
 	@Override
 	public void onClose() {
 		Config.save();
 		Minecraft.getInstance().gui.setScreen(parent);
+	}
+
+	// ---------------------------------------------------------------- drawing helpers
+	private static void rr(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int c) {
+		if (w <= 0 || h <= 0) return;
+		r = Math.min(r, Math.min(w, h) / 2);
+		g.fill(x, y + r, x + w, y + h - r, c);
+		for (int i = 0; i < r; i++) {
+			double d = r - i - 0.5;
+			int inset = r - (int) Math.round(Math.sqrt(r * r - d * d));
+			g.fill(x + inset, y + i, x + w - inset, y + i + 1, c);
+			g.fill(x + inset, y + h - 1 - i, x + w - inset, y + h - i, c);
+		}
+	}
+
+	private static int lerp(int a, int b, float t) {
+		t = Math.max(0, Math.min(1, t));
+		int al = (int) (((a >>> 24) & 255) * (1 - t) + ((b >>> 24) & 255) * t);
+		int r = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
+		int gg = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
+		int bl = (int) ((a & 255) * (1 - t) + (b & 255) * t);
+		return (al << 24) | (r << 16) | (gg << 8) | bl;
+	}
+
+	private static void rrGrad(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int top, int bot) {
+		for (int j = 0; j < h; j++) {
+			int inset = 0;
+			if (j < r) { double d = r - j - 0.5; inset = r - (int) Math.round(Math.sqrt(r * r - d * d)); }
+			else if (j >= h - r) { double d = j - (h - r) + 0.5; inset = r - (int) Math.round(Math.sqrt(r * r - d * d)); }
+			g.fill(x + inset, y + j, x + w - inset, y + j + 1, lerp(top, bot, j / (float) Math.max(1, h - 1)));
+		}
+	}
+
+	private void textC(GuiGraphicsExtractor g, String s, int cx, int y, int color) {
+		Font f = getFont();
+		g.text(f, s, cx - f.width(s) / 2, y, color);
+	}
+
+	private static float ease(float t) { t = Math.max(0, Math.min(1, t)); return 1 - (1 - t) * (1 - t) * (1 - t); }
+
+	// ---------------------------------------------------------------- rendering
+	@Override
+	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float delta) {
+		g.fillGradient(0, 0, this.width, this.height, 0xD0140F2E, 0xEE08061A);
+		float t = (System.nanoTime() - startNs) / 1e9f;
+		for (int i = 0; i < 22; i++) { // drifting sparkles (like the icon)
+			int bx = (i * 137 + 29) % Math.max(1, this.width);
+			float speed = 6 + (i % 5) * 3;
+			int y = this.height - (int) ((t * speed + i * 53) % (this.height + 20));
+			int x = bx + (int) (Math.sin(t * 0.8 + i) * 4);
+			int a = (int) (50 + 90 * Math.abs(Math.sin(t * 1.7 + i * 1.3)));
+			int col = (a << 24) | ((i % 3 == 0 ? MINT : i % 3 == 1 ? PINK : YEL) & 0xFFFFFF);
+			g.fill(x, y - 1, x + 1, y + 2, col);
+			g.fill(x - 1, y, x + 2, y + 1, col);
+		}
+	}
+
+	@Override
+	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
+		long now = System.nanoTime();
+		float dt = Math.min(0.05f, (now - lastNs) / 1e9f);
+		lastNs = now;
+		float t = (now - startNs) / 1e9f;
+		Config c = Config.INSTANCE;
+		Font font = getFont();
+
+		// hover + animation state
+		int h = hitAt(mx, my);
+		if (h != hoverId) {
+			hoverId = h;
+			if (h >= 0 && c.hoverSound) Sounds.play(Sounds.Type.HOVER);
+		}
+		float k = Math.min(1f, dt * 14f);
+		tabPos += (tab - tabPos) * k;
+		for (int i = 0; i < 6; i++) {
+			hoverT[i] += ((hoverId == 10 + i ? 1f : 0f) - hoverT[i]) * k;
+			pulse[i] = Math.max(0, pulse[i] - dt * 3.5f);
+		}
+		for (int i = 0; i < toggles.size(); i++)
+			swT[i] += ((toggles.get(i).get().get() ? 1f : 0f) - swT[i]) * k;
+
+		int oy = c.animations ? (int) ((1 - ease(t / 0.3f)) * 16) : 0;
+
+		// ---- card shell
+		rr(g, px - 1, py + 2 + oy, pw + 2, ph + 2, 6, 0x55000000);
+		rrGrad(g, px - 1, py - 1 + oy, pw + 2, ph + 2, 6, MINT, PINK);
+		rr(g, px, py + oy, pw, ph, 5, CARD);
+		g.fillGradient(px + 1, py + 5 + oy, px + pw - 1, py + headerH - 2 + oy, 0xFF2E2766, CARD);
+		g.fill(px + 5, py + 1 + oy, px + pw - 5, py + 5 + oy, 0xFF2E2766);
+
+		// ---- header: logo + title
+		Icons.logo(g, px + 10, py + (headerH - 32) / 2 + oy, 1);
+		int tx = px + 48, ty = py + headerH / 2 - 10 + oy;
+		Component title = Component.literal("Soft Chime UI").withStyle(ChatFormatting.BOLD);
+		g.text(font, title, tx + 1, ty + 1, 0xFFB03A78);
+		g.text(font, title, tx, ty, YEL);
+		g.text(font, "UI sounds & click effects", tx, ty + 12, MUTED);
+		// close button
+		Hit cl = hit(51);
+		if (cl != null) {
+			rr(g, cl.x, cl.y + oy, 16, 16, 4, hoverId == 51 ? PINK : CARD3);
+			for (int i = 0; i < 6; i++) {
+				g.fill(cl.x + 5 + i, cl.y + 5 + i + oy, cl.x + 6 + i, cl.y + 6 + i + oy, WHITE);
+				g.fill(cl.x + 10 - i, cl.y + 5 + i + oy, cl.x + 11 - i, cl.y + 6 + i + oy, WHITE);
+			}
+		}
+
+		// ---- tabs
+		int ix = px + 12, iw = pw - 24, tabY = py + headerH + oy;
+		int tw = (iw - 4) / 2;
+		rr(g, ix, tabY, iw, 20, 5, DEEP);
+		int indX = ix + 2 + Math.round(tabPos * (tw + 2));
+		rr(g, indX, tabY + 2, tw, 16, 4, YEL);
+		textC(g, "Sound", ix + tw / 2 + 1, tabY + 6, tab == 0 ? 0xFF2B2455 : MUTED);
+		textC(g, "Effects", ix + tw + 2 + (iw - tw - 2) / 2, tabY + 6, tab == 1 ? 0xFF2B2455 : MUTED);
+
+		int y = py + headerH + 28 + oy;
+		if (tab == 0) drawSoundTab(g, font, t, y, oy);
+		else drawEffectsTab(g, font, oy);
+
+		// ---- footer
+		Hit done = hit(50);
+		if (done != null) {
+			int dy = done.y + oy;
+			rr(g, done.x, dy + 2, done.w, done.h, 5, 0xFFB5902A);
+			rr(g, done.x, dy, done.w, done.h, 5, hoverId == 50 ? 0xFFFFE9A0 : YEL);
+			textC(g, "Done", done.x + done.w / 2, dy + 7, 0xFF2B2455);
+			if (hint) textC(g, "Press N anytime to open this menu", px + pw / 2, dy + done.h + 5, MUTED);
+		}
+	}
+
+	private void drawSoundTab(GuiGraphicsExtractor g, Font font, float t, int y, int oy) {
+		Config c = Config.INSTANCE;
+		g.text(font, "SOUND STYLE", px + 12, y, MUTED);
+		SoundStyle cur = c.style();
+		for (int i = 0; i < 6; i++) {
+			Hit hh = hit(10 + i);
+			if (hh == null) continue;
+			boolean sel = cur.ordinal() == i;
+			int cx = hh.x, cy = hh.y + oy - (int) (hoverT[i] * 2), cw = hh.w, chh = hh.h;
+			rr(g, cx, cy + 2, cw, chh, 5, 0x55000000);
+			rr(g, cx, cy, cw, chh, 5, lerp(CARD2, CARD3, hoverT[i]));
+			if (sel) {
+				rr(g, cx - 1, cy - 1, cw + 2, chh + 2, 6, YEL);
+				rr(g, cx, cy, cw, chh, 5, lerp(0xFF3B3470, 0xFF46397F, hoverT[i]));
+			}
+			// accent stripe on the left
+			g.fill(cx + 2, cy + 5, cx + 4, cy + chh - 5, ACCENT[i]);
+			// icon (16x16), slightly bounces when picked
+			int bounce = (int) (Math.sin(pulse[i] * Math.PI) * 3);
+			Icons.style(g, SoundStyle.values()[i], cx + 7, cy + (chh - 16) / 2 - bounce, 1, 255);
+			g.text(font, NAMES[i], cx + 26, cy + (chh >= 26 ? 5 : 3), WHITE);
+			if (chh >= 26) g.text(font, TAGS[i], cx + 26, cy + 15, MUTED);
+			if (sel) { // "now playing" equalizer
+				for (int b = 0; b < 3; b++) {
+					int bh = 2 + (int) (Math.abs(Math.sin(t * 6 + b * 1.7)) * 6);
+					g.fill(cx + cw - 12 + b * 3, cy + chh - 5 - bh, cx + cw - 10 + b * 3, cy + chh - 5, ACCENT[i]);
+				}
+			}
+		}
+		// volume
+		Hit vh = hit(20);
+		if (vh != null) {
+			int vy = vh.y + oy;
+			g.text(font, "VOLUME", px + 12, vy, MUTED);
+			String pct = Math.round(c.volume * 100) + "%";
+			g.text(font, pct, px + pw - 12 - font.width(pct), vy, YEL);
+			int ty = sy + oy, tw2 = sw;
+			rr(g, sx, ty, tw2, 6, 3, DEEP);
+			int fw = Math.round(c.volume * tw2);
+			if (fw > 0) for (int i = 0; i < fw; i++) g.fill(sx + i, ty + 1, sx + i + 1, ty + 5, lerp(MINT, YEL, i / (float) tw2));
+			int kx = sx + fw;
+			rr(g, kx - 6, ty - 3, 12, 12, 6, PINK);
+			rr(g, kx - 5, ty - 2, 10, 10, 5, WHITE);
+		}
+		// preview chips
+		String[] names = {"Click", "Open", "Close", "Hover"};
+		for (int i = 0; i < 4; i++) {
+			Hit ch = hit(30 + i);
+			if (ch == null) continue;
+			int cy = ch.y + oy;
+			boolean hv = hoverId == 30 + i;
+			rr(g, ch.x, cy, ch.w, ch.h, 5, hv ? CARD3 : CARD2);
+			int tw3 = font.width(names[i]);
+			int startX = ch.x + (ch.w - (tw3 + 10)) / 2;
+			for (int r = 0; r < 5; r++) g.fill(startX, cy + 6 + r, startX + (r < 3 ? r + 1 : 5 - r) * 1 + (r < 3 ? 1 : 0), cy + 7 + r, MINT);
+			g.text(font, names[i], startX + 10, cy + 5, WHITE);
+		}
+	}
+
+	private void drawEffectsTab(GuiGraphicsExtractor g, Font font, int oy) {
+		for (int i = 0; i < toggles.size(); i++) {
+			Hit hh = hit(40 + i);
+			if (hh == null) continue;
+			int cy = hh.y + oy;
+			boolean hv = hoverId == 40 + i;
+			rr(g, hh.x, cy, hh.w, hh.h, 5, hv ? CARD3 : CARD2);
+			g.text(font, toggles.get(i).label, hh.x + 8, cy + 7, WHITE);
+			float s = swT[i];
+			int sw2 = 26, shh = 12, sx2 = hh.x + hh.w - sw2 - 8, sy2 = cy + (hh.h - shh) / 2;
+			rr(g, sx2, sy2, sw2, shh, 6, lerp(OFF, MINT, s));
+			int kx = sx2 + 1 + Math.round(s * (sw2 - shh));
+			rr(g, kx, sy2 + 1, shh - 2, shh - 2, 5, WHITE);
+		}
 	}
 }
