@@ -361,7 +361,8 @@ public class ConfigScreen extends Screen {
 			rr(g, ch.x, cy, ch.w, ch.h, 5, hv ? CARD3 : CARD2);
 			int tw3 = font.width(names[i]);
 			int startX = ch.x + (ch.w - (tw3 + 10)) / 2;
-			for (int r = 0; r < 5; r++) g.fill(startX, cy + 6 + r, startX + (r < 3 ? r + 1 : 5 - r) * 1 + (r < 3 ? 1 : 0), cy + 7 + r, MINT);
+			int[] tri = {1, 2, 3, 2, 1};
+			for (int r = 0; r < 5; r++) g.fill(startX, cy + 6 + r, startX + tri[r], cy + 7 + r, MINT);
 			g.text(font, names[i], startX + 10, cy + 5, WHITE);
 		}
 	}
