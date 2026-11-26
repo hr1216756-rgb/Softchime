@@ -1,6 +1,7 @@
 package id.softchime;
 
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
@@ -21,6 +22,7 @@ public final class UiFx {
 	private static final List<Particle> PARTICLES = new ArrayList<>();
 	private static final int[] PALETTE = {0xFFE066, 0xFFFFFF, 0x9AD1FF, 0xFFB3D9};
 
+	public static final boolean REANIMATED = FabricLoader.getInstance().isModLoaded("reanimated");
 	private static long openedAt = 0;
 	private static boolean wasLeft, wasRight;
 	private static AbstractWidget hovered;
@@ -38,9 +40,11 @@ public final class UiFx {
 		Minecraft mc = Minecraft.getInstance();
 		Config cfg = Config.INSTANCE;
 		long now = System.currentTimeMillis();
+		// ReAnimated already animates screen open/close and hover -> don't draw duplicates on top of it.
+		boolean ownAnim = cfg.animations && !(REANIMATED && cfg.reanimatedCompat);
 
 		// 1) open animation: quick soft light flash that fades out
-		if (cfg.animations) {
+		if (ownAnim) {
 			float p = (now - openedAt) / 260f;
 			if (p >= 0 && p < 1) {
 				int a = (int) (70 * (1 - p) * (1 - p));
@@ -58,7 +62,7 @@ public final class UiFx {
 			hoverStart = now;
 			if (h != null && cfg.hoverSound) Sounds.play(Sounds.Type.HOVER);
 		}
-		if (h != null && cfg.animations) {
+		if (h != null && ownAnim) {
 			float p = Math.min(1f, (now - hoverStart) / 140f);
 			int a = (int) (200 * p);
 			g.outline(h.getX() - 1, h.getY() - 1, h.getWidth() + 2, h.getHeight() + 2, argb(a, 0xFFE066));

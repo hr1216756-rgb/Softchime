@@ -89,7 +89,11 @@ public class ConfigScreen extends Screen {
 		addRenderableWidget(toggle(x, y, w, "Hover sound", () -> c.hoverSound, v -> c.hoverSound = v)); y += 22;
 		addRenderableWidget(toggle(x, y, w, "Cursor ring", () -> c.cursorRing, v -> c.cursorRing = v)); y += 22;
 		addRenderableWidget(toggle(x, y, w, "Click particles", () -> c.clickParticles, v -> c.clickParticles = v)); y += 22;
-		addRenderableWidget(toggle(x, y, w, "Animations", () -> c.animations, v -> c.animations = v)); y += 28;
+		addRenderableWidget(toggle(x, y, w, "Animations", () -> c.animations, v -> c.animations = v)); y += 22;
+		if (UiFx.REANIMATED) {
+			addRenderableWidget(toggle(x, y, w, "ReAnimated compat", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v)); y += 22;
+		}
+		y += 6;
 
 		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
 			.bounds(x, y, w, 20).build());

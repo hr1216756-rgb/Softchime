@@ -5,8 +5,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -45,7 +48,17 @@ public class SoftChimeClient implements ClientModInitializer {
 		});
 
 		// Draw cursor ring / ripples / particles / hover glow on top of every screen.
-		ScreenEvents.AFTER_INIT.register((client, screen, w, h) ->
-			ScreenEvents.afterExtract(screen).register(UiFx::render));
+		ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
+			ScreenEvents.afterExtract(screen).register(UiFx::render);
+			// Settings button inside Options (handy on phones where the K key is awkward).
+			if (Config.INSTANCE.optionsButton && screen.getClass().getSimpleName().equals("OptionsScreen")) {
+				try {
+					Button b = Button.builder(Component.literal("Soft Chime"),
+						btn -> client.gui.setScreen(new ConfigScreen(screen)))
+						.bounds(6, h / 2 - 10, 90, 20).build();
+					Screens.getWidgets(screen).add(b);
+				} catch (Throwable t) { LOGGER.warn("Could not add options button", t); }
+			}
+		});
 	}
 }

@@ -10,20 +10,6 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 25 }
       - uses: gradle/actions/setup-gradle@v4
-      - name: Inspect ReAnimated (debug)
-        continue-on-error: true
-        run: |
-          mkdir -p /tmp/ra && cd /tmp/ra
-          curl -s 'https://api.modrinth.com/v2/project/re-animated/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%2226.3%22%5D' -o v.json
-          python3 -c "
-          import json;v=json.load(open('v.json'));print(len(v),'versions');
-          [print(x['version_number'],x['game_versions'],[f['filename'] for f in x['files']]) for x in v[:3]]
-          open('url.txt','w').write(v[0]['files'][0]['url'])"
-          curl -sL "$(cat url.txt)" -o ra.jar && ls -la ra.jar
-          unzip -p ra.jar fabric.mod.json | head -c 2500; echo
-          unzip -l ra.jar | grep -iE "mixins|refmap" | head
-          for m in $(unzip -l ra.jar | grep -oE '[A-Za-z0-9_.-]*mixins[A-Za-z0-9_.-]*\.json' | sort -u); do echo "== $m"; unzip -p ra.jar $m | head -c 2500; echo; done
-          unzip -l ra.jar | grep -iE "class" | grep -iE "config|compat|api" | head -20
       - run: ./gradlew build
       - uses: actions/upload-artifact@v4
         with: { name: softchime-jar, path: build/libs/*.jar }

@@ -21,6 +21,9 @@ public class Config {
 	public boolean cursorRing = true;
 	public boolean clickParticles = true;
 	public boolean animations = true;
+	/** When ReAnimated is installed: let it handle open/hover animations, we keep sounds + cursor + particles. */
+	public boolean reanimatedCompat = true;
+	public boolean optionsButton = true;
 
 	public SoundStyle style() {
 		try { return SoundStyle.valueOf(style); } catch (Exception e) { return SoundStyle.SOFT_CHIME; }
