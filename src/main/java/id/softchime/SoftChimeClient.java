@@ -31,9 +31,9 @@ public class SoftChimeClient implements ClientModInitializer {
 		// Open/close sounds for every screen: inventory, chest, furnace, pause menu, creative tabs, ...
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (openConfigKey.consumeClick()) {
-				mc.setScreen(new ConfigScreen(mc.screen));
+				mc.gui.setScreen(new ConfigScreen(mc.gui.screen()));
 			}
-			Screen now = mc.screen;
+			Screen now = mc.gui.screen();
 			if (now != lastScreen) {
 				if (Config.INSTANCE.openCloseSound) {
 					if (now != null) Sounds.play(Sounds.Type.OPEN);
