@@ -26,7 +26,7 @@ public class SoftChimeClient implements ClientModInitializer {
 		// Press K (changeable in Controls) to open the sound-style menu.
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "main"));
 		openConfigKey = KeyMappingHelper.registerKeyMapping(
-			new KeyMapping("key.softchime.config", InputConstants.Type.KEYSYM, InputConstants.KEY_K, category));
+			new KeyMapping("key.softchime.config", InputConstants.Type.KEYBOARD, InputConstants.KEY_K, category));
 
 		// Open/close sounds for every screen: inventory, chest, furnace, pause menu, creative tabs, ...
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -46,6 +46,6 @@ public class SoftChimeClient implements ClientModInitializer {
 
 		// Draw cursor ring / ripples / particles / hover glow on top of every screen.
 		ScreenEvents.AFTER_INIT.register((client, screen, w, h) ->
-			ScreenEvents.afterRender(screen).register(UiFx::render));
+			ScreenEvents.afterExtract(screen).register(UiFx::render));
 	}
 }
