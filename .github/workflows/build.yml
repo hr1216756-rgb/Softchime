@@ -24,4 +24,4 @@ jobs:
         if: always()
         run: |
           CP=$(find ~/.gradle -name '*.jar' \( -iname '*minecraft*' -o -iname 'fabric-screen-api*' \) -not -name '*sources*' | tr '\n' ':')
-          for c in 'net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents' 'net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents$BeforeMouseClick' 'net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents$AllowMouseClick' 'net.fabricmc.fabric.api.client.screen.v1.ScreenEvents' net.minecraft.client.input.MouseButtonEvent; do echo "=== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -60; done
+          for c in net.minecraft.client.gui.screens.Screen net.minecraft.client.gui.GuiGraphicsExtractor net.minecraft.client.gui.components.AbstractWidget net.minecraft.client.gui.components.Renderable net.minecraft.client.gui.Font net.minecraft.util.ARGB; do echo "=== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -220; done
