@@ -7,6 +7,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -45,6 +46,11 @@ public class ConfigScreen extends Screen {
 	private final float[] pulse = new float[8];
 	private final float[] swT = new float[12];
 	private int hoverId = -1;
+	private long lastActionNs = 0;
+	private boolean wasDown = false;
+	private String dbg = "";
+	private static final String VERSION = FabricLoader.getInstance().getModContainer("softchime")
+		.map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
 	private final long startNs = System.nanoTime();
 	private long lastNs = startNs;
 
@@ -127,9 +133,12 @@ public class ConfigScreen extends Screen {
 
 	/** Called from the Fabric click event (UiFx.onClick) - works reliably with touch launchers too. */
 	public void handleClick(double mx, double my, int button) {
-		if (button != 0) return;
 		int id = hitAt(mx, my);
+		dbg = "click " + (int) mx + "," + (int) my + " btn" + button + " -> " + id;
 		if (id < 0) return;
+		long now = System.nanoTime();
+		if (now - lastActionNs < 250_000_000L) return; // de-duplicate event + polling paths
+		lastActionNs = now;
 		Config c = Config.INSTANCE;
 		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
 		else if (id >= 10 && id < 16) {
@@ -234,6 +243,11 @@ public class ConfigScreen extends Screen {
 			else { dragging = false; lastTickStep = -1; Config.save(); }
 		}
 
+		// fallback click path: detect the press ourselves (de-duplicated in handleClick)
+		boolean down = Minecraft.getInstance().mouseHandler.isLeftPressed();
+		if (down && !wasDown) handleClick(mx, my, 0);
+		wasDown = down;
+
 		// hover + animation state
 		int h = hitAt(mx, my);
 		if (h != hoverId) {
@@ -264,7 +278,7 @@ public class ConfigScreen extends Screen {
 		Component title = Component.literal("Soft Chime UI").withStyle(ChatFormatting.BOLD);
 		g.text(font, title, tx + 1, ty + 1, 0xFFB03A78);
 		g.text(font, title, tx, ty, YEL);
-		g.text(font, "UI sounds & click effects", tx, ty + 12, MUTED);
+		g.text(font, "UI sounds & click effects  v" + VERSION, tx, ty + 12, MUTED);
 		// close button
 		Hit cl = hit(51);
 		if (cl != null) {
@@ -287,6 +301,8 @@ public class ConfigScreen extends Screen {
 		int y = py + headerH + 28 + oy;
 		if (tab == 0) drawSoundTab(g, font, t, y, oy);
 		else drawEffectsTab(g, font, oy);
+
+		g.text(font, dbg, 4, this.height - 10, MUTED);
 
 		// ---- footer
 		Hit done = hit(50);
