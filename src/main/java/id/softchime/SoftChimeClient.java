@@ -5,6 +5,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -26,10 +27,10 @@ public class SoftChimeClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		Config.load();
 
-		// Press K (changeable in Controls) to open the sound-style menu.
+		// Press N (changeable in Controls) to open the sound-style menu.
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "main"));
 		openConfigKey = KeyMappingHelper.registerKeyMapping(
-			new KeyMapping("key.softchime.config", InputConstants.Type.KEYBOARD, InputConstants.KEY_K, category));
+			new KeyMapping("key.softchime.config", InputConstants.Type.KEYBOARD, InputConstants.KEY_N, category));
 
 		// Open/close sounds for every screen: inventory, chest, furnace, pause menu, creative tabs, ...
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -50,6 +51,7 @@ public class SoftChimeClient implements ClientModInitializer {
 		// Draw cursor ring / ripples / particles / hover glow on top of every screen.
 		ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
 			ScreenEvents.afterExtract(screen).register(UiFx::render);
+			ScreenMouseEvents.beforeMouseClick(screen).register((scr, event) -> UiFx.onClick(scr, event.x(), event.y()));
 			// Settings button inside Options (handy on phones where the K key is awkward).
 			if (Config.INSTANCE.optionsButton && screen.getClass().getSimpleName().equals("OptionsScreen")) {
 				try {

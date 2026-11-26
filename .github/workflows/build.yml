@@ -20,8 +20,3 @@ jobs:
           JAR=$(ls build/libs/softchime-*.jar | grep -v sources | head -1)
           unzip -l "$JAR" | grep -cE "\.ogg" 
           gh release create "v1.0.0-build${{ github.run_number }}" "$JAR" --title "Soft Chime UI build ${{ github.run_number }}" --notes "Fabric mod for Minecraft 26.3. Needs Fabric API. Press K in-game for settings."
-      - name: Inspect mouse API (debug)
-        if: always()
-        run: |
-          CP=$(find ~/.gradle -name '*.jar' \( -iname '*minecraft*' -o -iname 'fabric-screen-api*' \) -not -name '*sources*' | tr '\n' ':')
-          for c in net.minecraft.client.gui.screens.Screen net.minecraft.client.gui.GuiGraphicsExtractor net.minecraft.client.gui.components.AbstractWidget net.minecraft.client.gui.components.Renderable net.minecraft.client.gui.Font net.minecraft.util.ARGB; do echo "=== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -220; done
