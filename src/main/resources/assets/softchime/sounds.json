@@ -1,0 +1,272 @@
+{
+  "soft_chime_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_chime_click",
+        "stream": false
+      }
+    ]
+  },
+  "soft_chime_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_chime_open",
+        "stream": false
+      }
+    ]
+  },
+  "soft_chime_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_chime_close",
+        "stream": false
+      }
+    ]
+  },
+  "soft_chime_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_chime_hover",
+        "stream": false
+      }
+    ]
+  },
+  "soft_chime_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_chime_tick",
+        "stream": false
+      }
+    ]
+  },
+  "bubble_pop_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:bubble_pop_click",
+        "stream": false
+      }
+    ]
+  },
+  "bubble_pop_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:bubble_pop_open",
+        "stream": false
+      }
+    ]
+  },
+  "bubble_pop_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:bubble_pop_close",
+        "stream": false
+      }
+    ]
+  },
+  "bubble_pop_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:bubble_pop_hover",
+        "stream": false
+      }
+    ]
+  },
+  "bubble_pop_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:bubble_pop_tick",
+        "stream": false
+      }
+    ]
+  },
+  "wood_marimba_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_marimba_click",
+        "stream": false
+      }
+    ]
+  },
+  "wood_marimba_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_marimba_open",
+        "stream": false
+      }
+    ]
+  },
+  "wood_marimba_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_marimba_close",
+        "stream": false
+      }
+    ]
+  },
+  "wood_marimba_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_marimba_hover",
+        "stream": false
+      }
+    ]
+  },
+  "wood_marimba_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_marimba_tick",
+        "stream": false
+      }
+    ]
+  },
+  "crystal_glass_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:crystal_glass_click",
+        "stream": false
+      }
+    ]
+  },
+  "crystal_glass_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:crystal_glass_open",
+        "stream": false
+      }
+    ]
+  },
+  "crystal_glass_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:crystal_glass_close",
+        "stream": false
+      }
+    ]
+  },
+  "crystal_glass_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:crystal_glass_hover",
+        "stream": false
+      }
+    ]
+  },
+  "crystal_glass_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:crystal_glass_tick",
+        "stream": false
+      }
+    ]
+  },
+  "retro_chip_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:retro_chip_click",
+        "stream": false
+      }
+    ]
+  },
+  "retro_chip_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:retro_chip_open",
+        "stream": false
+      }
+    ]
+  },
+  "retro_chip_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:retro_chip_close",
+        "stream": false
+      }
+    ]
+  },
+  "retro_chip_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:retro_chip_hover",
+        "stream": false
+      }
+    ]
+  },
+  "retro_chip_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:retro_chip_tick",
+        "stream": false
+      }
+    ]
+  },
+  "soft_tap_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_tap_click",
+        "stream": false
+      }
+    ]
+  },
+  "soft_tap_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_tap_open",
+        "stream": false
+      }
+    ]
+  },
+  "soft_tap_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_tap_close",
+        "stream": false
+      }
+    ]
+  },
+  "soft_tap_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_tap_hover",
+        "stream": false
+      }
+    ]
+  },
+  "soft_tap_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_tap_tick",
+        "stream": false
+      }
+    ]
+  }
+}
