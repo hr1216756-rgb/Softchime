@@ -13,7 +13,7 @@ import java.util.Map;
  * this is a client-only mod, so nothing has to be synced with servers.
  */
 public final class Sounds {
-	public enum Type { CLICK, OPEN, CLOSE, HOVER, TICK }
+	public enum Type { CLICK, OPEN, CLOSE, HOVER, TICK, SLIDE }
 
 	private static final Map<String, SoundEvent> CACHE = new HashMap<>();
 
@@ -28,9 +28,17 @@ public final class Sounds {
 	public static void play(Type type) { play(Config.INSTANCE.style(), type); }
 
 	public static void play(SoundStyle style, Type type) {
+		play(style, type, 0.97f + (float) Math.random() * 0.06f); // tiny variation, feels alive
+	}
+
+	/** Slider sound: each style has its own sample, pitch follows the slider position (0..1). */
+	public static void slide(float position) {
+		play(Config.INSTANCE.style(), Type.SLIDE, 0.8f + Math.max(0f, Math.min(1f, position)) * 0.7f);
+	}
+
+	public static void play(SoundStyle style, Type type, float pitch) {
 		float vol = Config.INSTANCE.volume;
 		if (vol <= 0f) return;
-		float pitch = 0.97f + (float) Math.random() * 0.06f; // tiny variation, feels alive
 		Minecraft.getInstance().getSoundManager()
 			.play(SimpleSoundInstance.forUI(get(style, type), pitch, vol));
 	}

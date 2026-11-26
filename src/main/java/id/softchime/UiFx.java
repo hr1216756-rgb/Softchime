@@ -97,10 +97,10 @@ public final class UiFx {
 		}
 
 		// 3) slider drag ticks
-		boolean left = mc.mouseHandler.isLeftPressed();
+		boolean left = mc.mouseHandler.isLeftPressed() || mc.mouseHandler.isRightPressed() || mc.mouseHandler.isMiddlePressed();
 		if (left && h instanceof AbstractSliderButton && cfg.hoverSound) {
 			if (Float.isNaN(lastTickX) || Math.abs(mouseX - lastTickX) >= 6) {
-				Sounds.play(Sounds.Type.TICK);
+				Sounds.slide(h.getWidth() > 0 ? (mouseX - h.getX()) / (float) h.getWidth() : 0.5f);
 				lastTickX = mouseX;
 			}
 		} else if (!left) lastTickX = Float.NaN;

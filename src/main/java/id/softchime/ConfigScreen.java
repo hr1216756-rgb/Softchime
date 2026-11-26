@@ -154,11 +154,16 @@ public class ConfigScreen extends Screen {
 		} else if (id == 50 || id == 51) { click(); onClose(); }
 	}
 
+	private static boolean anyPressed() {
+		var mh = Minecraft.getInstance().mouseHandler; // launchers may report a tap as the right/other button
+		return mh.isLeftPressed() || mh.isRightPressed() || mh.isMiddlePressed();
+	}
+
 	private void setVolumeFrom(double mx) {
-		float v = (float) Math.max(0, Math.min(1, (mx - sx) / (double) sw));
+		float v = (float) Math.max(0, Math.min(1, (mx - (sx + 6)) / (double) (sw - 12)));
 		Config.INSTANCE.volume = Math.round(v * 20) / 20f; // 5% steps
 		int step = Math.round(Config.INSTANCE.volume * 20);
-		if (step != lastTickStep) { lastTickStep = step; Sounds.play(Sounds.Type.TICK); }
+		if (step != lastTickStep) { lastTickStep = step; Sounds.slide(Config.INSTANCE.volume); }
 	}
 
 	@Override
@@ -239,12 +244,12 @@ public class ConfigScreen extends Screen {
 
 		// slider drag: follow the pointer while the button is held
 		if (dragging) {
-			if (Minecraft.getInstance().mouseHandler.isLeftPressed()) setVolumeFrom(mx);
+			if (anyPressed()) setVolumeFrom(mx);
 			else { dragging = false; lastTickStep = -1; Config.save(); }
 		}
 
 		// fallback click path: detect the press ourselves (de-duplicated in handleClick)
-		boolean down = Minecraft.getInstance().mouseHandler.isLeftPressed();
+		boolean down = anyPressed();
 		if (down && !wasDown) handleClick(mx, my, 0);
 		wasDown = down;
 
@@ -302,8 +307,6 @@ public class ConfigScreen extends Screen {
 		if (tab == 0) drawSoundTab(g, font, t, y, oy);
 		else drawEffectsTab(g, font, oy);
 
-		g.text(font, dbg, 4, this.height - 10, MUTED);
-
 		// ---- footer
 		Hit done = hit(50);
 		if (done != null) {
@@ -353,9 +356,8 @@ public class ConfigScreen extends Screen {
 			g.text(font, pct, px + pw - 12 - font.width(pct), vy, YEL);
 			int ty = sy + oy, tw2 = sw;
 			rr(g, sx, ty, tw2, 6, 3, DEEP);
-			int fw = Math.round(c.volume * tw2);
-			if (fw > 0) for (int i = 0; i < fw; i++) g.fill(sx + i, ty + 1, sx + i + 1, ty + 5, lerp(MINT, YEL, i / (float) tw2));
-			int kx = sx + fw;
+			int kx = sx + 6 + Math.round(c.volume * (tw2 - 12));
+			for (int i = 0; i < kx - sx; i++) g.fill(sx + i, ty + 1, sx + i + 1, ty + 5, lerp(MINT, YEL, i / (float) tw2));
 			rr(g, kx - 6, ty - 3, 12, 12, 6, PINK);
 			rr(g, kx - 5, ty - 2, 10, 10, 5, WHITE);
 		}
