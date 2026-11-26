@@ -1,5 +1,7 @@
 name: build
 on: [push, workflow_dispatch]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,10 +13,10 @@ jobs:
       - run: ./gradlew build
       - uses: actions/upload-artifact@v4
         with: { name: softchime-jar, path: build/libs/*.jar }
-      - name: Inspect API (debug)
-        if: failure()
+      - name: Publish release (easy download on phone)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          find ~/.gradle -name '*.jar' \( -iname '*minecraft*' -o -iname 'fabric-screen-api*' -o -iname 'fabric-key-mapping*' -o -iname 'fabric-lifecycle*' \) -not -name '*sources*' | head -20
-          CP=$(find ~/.gradle -name '*.jar' \( -iname '*minecraft*' -o -iname 'fabric-screen-api*' -o -iname 'fabric-key-mapping*' -o -iname 'fabric-lifecycle*' -o -iname 'fabric-api-base*' \) -not -name '*sources*' | tr '\n' ':')
-          echo "CP=$CP" | head -c 600
-          for c in net.minecraft.client.gui.Gui 'net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterExtract' 'net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterInit' net.minecraft.client.gui.components.events.GuiEventListener; do echo "=== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -200; done
+          JAR=$(ls build/libs/softchime-*.jar | grep -v sources | head -1)
+          unzip -l "$JAR" | grep -cE "\.ogg" 
+          gh release create "v1.0.0-build${{ github.run_number }}" "$JAR" --title "Soft Chime UI build ${{ github.run_number }}" --notes "Fabric mod for Minecraft 26.3. Needs Fabric API. Press K in-game for settings."
