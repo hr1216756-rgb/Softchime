@@ -51,7 +51,7 @@ public class SoftChimeClient implements ClientModInitializer {
 		// Draw cursor ring / ripples / particles / hover glow on top of every screen.
 		ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
 			ScreenEvents.afterExtract(screen).register(UiFx::render);
-			ScreenMouseEvents.beforeMouseClick(screen).register((scr, event) -> UiFx.onClick(scr, event.x(), event.y()));
+			ScreenMouseEvents.beforeMouseClick(screen).register((scr, event) -> UiFx.onClick(scr, event.x(), event.y(), event.button()));
 			// Settings button inside Options (handy on phones where the K key is awkward).
 			if (Config.INSTANCE.optionsButton && screen.getClass().getSimpleName().equals("OptionsScreen")) {
 				try {

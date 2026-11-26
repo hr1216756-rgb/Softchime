@@ -7,7 +7,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -126,11 +125,11 @@ public class ConfigScreen extends Screen {
 	// ---------------------------------------------------------------- input
 	private static void click() { Sounds.play(Sounds.Type.CLICK); }
 
-	@Override
-	public boolean mouseClicked(MouseButtonEvent e, boolean dbl) {
-		if (e.button() != 0) return super.mouseClicked(e, dbl);
-		int id = hitAt(e.x(), e.y());
-		if (id < 0) return super.mouseClicked(e, dbl);
+	/** Called from the Fabric click event (UiFx.onClick) - works reliably with touch launchers too. */
+	public void handleClick(double mx, double my, int button) {
+		if (button != 0) return;
+		int id = hitAt(mx, my);
+		if (id < 0) return;
 		Config c = Config.INSTANCE;
 		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
 		else if (id >= 10 && id < 16) {
@@ -138,13 +137,12 @@ public class ConfigScreen extends Screen {
 			c.style = st.name(); Config.save();
 			pulse[id - 10] = 1f;
 			Sounds.play(st, Sounds.Type.CLICK); // instant preview of the style you picked
-		} else if (id == 20) { dragging = true; setVolumeFrom(e.x()); }
-		else if (id >= 30 && id < 34) Sounds.play(Sounds.Type.values()[new int[]{0, 1, 2, 3}[id - 30]]);
+		} else if (id == 20) { dragging = true; setVolumeFrom(mx); }
+		else if (id >= 30 && id < 34) Sounds.play(Sounds.Type.values()[id - 30]); // CLICK, OPEN, CLOSE, HOVER
 		else if (id >= 40 && id < 40 + toggles.size()) {
 			Toggle t = toggles.get(id - 40);
 			t.set.accept(!t.get.get()); Config.save(); click();
 		} else if (id == 50 || id == 51) { click(); onClose(); }
-		return true;
 	}
 
 	private void setVolumeFrom(double mx) {
@@ -152,18 +150,6 @@ public class ConfigScreen extends Screen {
 		Config.INSTANCE.volume = Math.round(v * 20) / 20f; // 5% steps
 		int step = Math.round(Config.INSTANCE.volume * 20);
 		if (step != lastTickStep) { lastTickStep = step; Sounds.play(Sounds.Type.TICK); }
-	}
-
-	@Override
-	public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
-		if (dragging) { setVolumeFrom(e.x()); return true; }
-		return super.mouseDragged(e, dx, dy);
-	}
-
-	@Override
-	public boolean mouseReleased(MouseButtonEvent e) {
-		if (dragging) { dragging = false; lastTickStep = -1; Config.save(); return true; }
-		return super.mouseReleased(e);
 	}
 
 	@Override
@@ -241,6 +227,12 @@ public class ConfigScreen extends Screen {
 		float t = (now - startNs) / 1e9f;
 		Config c = Config.INSTANCE;
 		Font font = getFont();
+
+		// slider drag: follow the pointer while the button is held
+		if (dragging) {
+			if (Minecraft.getInstance().mouseHandler.isLeftPressed()) setVolumeFrom(mx);
+			else { dragging = false; lastTickStep = -1; Config.save(); }
+		}
 
 		// hover + animation state
 		int h = hitAt(mx, my);

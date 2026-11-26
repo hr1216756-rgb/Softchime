@@ -42,7 +42,8 @@ public final class UiFx {
 	}
 
 	/** Fired for EVERY mouse press / screen tap (event based, so quick phone taps are never missed). */
-	public static void onClick(Screen screen, double mx, double my) {
+	public static void onClick(Screen screen, double mx, double my, int button) {
+		if (screen instanceof ConfigScreen cs) cs.handleClick(mx, my, button);
 		Config cfg = Config.INSTANCE;
 		long now = System.currentTimeMillis();
 		// the settings screen plays its own sounds (so previewing a style plays the NEW style)
