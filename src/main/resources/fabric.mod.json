@@ -6,6 +6,7 @@
   "description": "Soft chime UI sounds, cursor ring, click particles and animations. Sound style selectable in-game (press K).",
   "authors": ["You"],
   "license": "MIT",
+  "icon": "assets/softchime/icon.png",
   "environment": "client",
   "entrypoints": { "client": ["id.softchime.SoftChimeClient"] },
   "suggests": { "reanimated": "*", "modmenu": "*" },
