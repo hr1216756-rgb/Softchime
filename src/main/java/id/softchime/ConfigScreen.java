@@ -22,9 +22,10 @@ public class ConfigScreen extends Screen {
 	private static final int MINT = 0xFF6BF5D0, YEL = 0xFFFFD866, PINK = 0xFFFF5FA2, WHITE = 0xFFFFFFFF;
 	private static final int MUTED = 0xFFA79FD6, OFF = 0xFF4A4378;
 
-	private static final String[] NAMES = {"Soft Chime", "Bubble Pop", "Marimba", "Crystal", "Retro Chip", "Soft Tap"};
-	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap"};
-	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK};
+	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "ASMR"};
+	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap", "soft whisper"};
+	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFFF9EC8};
+	private static final int NS = SoundStyle.values().length;
 
 	private record Hit(int x, int y, int w, int h, int id) {
 		boolean in(double mx, double my) { return mx >= x && mx < x + w && my >= y && my < y + h; }
@@ -101,9 +102,9 @@ public class ConfigScreen extends Screen {
 		int y = tabY + 28;
 		if (tab == 0) {
 			y += 11;
-			int cw = (iw - 8) / 3;
-			for (int i = 0; i < 6; i++)
-				hits.add(new Hit(ix + (i % 3) * (cw + 4), y + (i / 3) * (cardH + 4), cw, cardH, 10 + i));
+			int cw = (iw - 12) / 4;
+			for (int i = 0; i < NS; i++)
+				hits.add(new Hit(ix + (i % 4) * (cw + 4), y + (i / 4) * (cardH + 4), cw, cardH, 10 + i));
 			y += 2 * cardH + 4 + 8;
 			sx = ix; sy = y + 12; sw = iw;
 			hits.add(new Hit(ix, y, iw, 26, 20));
@@ -141,7 +142,7 @@ public class ConfigScreen extends Screen {
 		lastActionNs = now;
 		Config c = Config.INSTANCE;
 		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
-		else if (id >= 10 && id < 16) {
+		else if (id >= 10 && id < 10 + NS) {
 			SoundStyle st = SoundStyle.values()[id - 10];
 			c.style = st.name(); Config.save();
 			pulse[id - 10] = 1f;
@@ -261,7 +262,7 @@ public class ConfigScreen extends Screen {
 		}
 		float k = Math.min(1f, dt * 14f);
 		tabPos += (tab - tabPos) * k;
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < NS; i++) {
 			hoverT[i] += ((hoverId == 10 + i ? 1f : 0f) - hoverT[i]) * k;
 			pulse[i] = Math.max(0, pulse[i] - dt * 3.5f);
 		}
@@ -322,7 +323,7 @@ public class ConfigScreen extends Screen {
 		Config c = Config.INSTANCE;
 		g.text(font, "SOUND STYLE", px + 12, y, MUTED);
 		SoundStyle cur = c.style();
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < NS; i++) {
 			Hit hh = hit(10 + i);
 			if (hh == null) continue;
 			boolean sel = cur.ordinal() == i;
@@ -338,12 +339,11 @@ public class ConfigScreen extends Screen {
 			// icon (16x16), slightly bounces when picked
 			int bounce = (int) (Math.sin(pulse[i] * Math.PI) * 3);
 			Icons.style(g, SoundStyle.values()[i], cx + 7, cy + (chh - 16) / 2 - bounce, 1, 255);
-			g.text(font, NAMES[i], cx + 26, cy + (chh >= 26 ? 5 : 3), WHITE);
-			if (chh >= 26) g.text(font, TAGS[i], cx + 26, cy + 15, MUTED);
+			g.text(font, NAMES[i], cx + 25, cy + (chh - 8) / 2, WHITE);
 			if (sel) { // "now playing" equalizer
 				for (int b = 0; b < 3; b++) {
 					int bh = 2 + (int) (Math.abs(Math.sin(t * 6 + b * 1.7)) * 6);
-					g.fill(cx + cw - 12 + b * 3, cy + chh - 5 - bh, cx + cw - 10 + b * 3, cy + chh - 5, ACCENT[i]);
+					g.fill(cx + cw - 8 + b * 2, cy + chh - 4 - bh, cx + cw - 7 + b * 2, cy + chh - 4, ACCENT[i]);
 				}
 			}
 		}

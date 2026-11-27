@@ -153,6 +153,24 @@ public final class Icons {
 			"...pP......pP...",
 			".....PpPpPp.....",
 			"................"
+		},
+		{
+			"................",
+			"..PPPP....PPPP..",
+			".PPPPPP..PPPPPP.",
+			".PWWPPPPPPPPPPp.",
+			"PPWPPPPPPPPPPPpp",
+			"PPPPPPPPPPPPPPpp",
+			"PPPPPPPPPPPPPPpp",
+			".PPPPPPPPPPPPpp.",
+			".PPPPPPPPPPPPpp.",
+			"..PPPPPPPPPPpp..",
+			"...PPPPPPPPpp...",
+			"....PPPPPPpp..Y.",
+			".M...PPPPpp..YYY",
+			"MMM...PPpp....Y.",
+			".M.....pp.......",
+			"................"
 		}
 	};
 

@@ -6,7 +6,8 @@ public enum SoundStyle {
 	WOOD_MARIMBA("wood_marimba", "Wood Marimba"),
 	CRYSTAL_GLASS("crystal_glass", "Crystal Glass"),
 	RETRO_CHIP("retro_chip", "Retro Chip"),
-	SOFT_TAP("soft_tap", "Soft Tap");
+	SOFT_TAP("soft_tap", "Soft Tap"),
+	ASMR("asmr", "ASMR Whisper");
 
 	public final String id;
 	public final String label;

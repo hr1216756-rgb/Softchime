@@ -322,5 +322,59 @@
         "stream": false
       }
     ]
+  },
+  "asmr_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:asmr_click",
+        "stream": false
+      }
+    ]
+  },
+  "asmr_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:asmr_open",
+        "stream": false
+      }
+    ]
+  },
+  "asmr_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:asmr_close",
+        "stream": false
+      }
+    ]
+  },
+  "asmr_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:asmr_hover",
+        "stream": false
+      }
+    ]
+  },
+  "asmr_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:asmr_tick",
+        "stream": false
+      }
+    ]
+  },
+  "asmr_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:asmr_slide",
+        "stream": false
+      }
+    ]
   }
 }
