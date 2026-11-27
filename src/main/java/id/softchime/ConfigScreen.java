@@ -7,6 +7,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 import net.minecraft.client.input.KeyEvent;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
@@ -65,6 +67,7 @@ public class ConfigScreen extends Screen {
 	/** kind: 0 header, 1 style chips, 2 volume slider, 3 preview buttons, 4 toggle, 5 theme chips, 6 text line */
 	private record Item(int kind, int a, String s1, String s2, int h) {}
 
+	private static final Identifier BANNER = Identifier.fromNamespaceAndPath("softchime", "textures/gui/banner.png");
 	private final Screen parent;
 	private int tab = 0;
 	private final int[] scroll = new int[4];
@@ -80,6 +83,7 @@ public class ConfigScreen extends Screen {
 	private final float[] swT = new float[12];
 	private int hoverId = -1;
 	private long lastActionNs = 0;
+	private int lastActionId = -1;
 	private boolean wasDown = false;
 	private long tabStartNs = System.nanoTime();
 	private int pw, ph, px, py;
@@ -123,8 +127,9 @@ public class ConfigScreen extends Screen {
 			l.add(new Item(0, SoundStyle.WATER_DROP.ordinal(), "Colour Theme", "Changes the whole menu", 22));
 			for (int r = 0; r < 2; r++) l.add(new Item(5, r, "", "", 24));
 		} else {
-			l.add(new Item(0, SoundStyle.STAR_SHIMMER.ordinal(), "Secret Code", "Tap the box, type the code, press Enter", 22));
+			l.add(new Item(0, SoundStyle.STAR_SHIMMER.ordinal(), "Secret Code", "Use the keys below (or your keyboard)", 22));
 			l.add(new Item(7, 0, "", "", 24));
+			l.add(new Item(8, 0, "", "", 4 * 16 + 2));
 			l.add(new Item(6, 0, "Soft Chime UI  v" + VERSION, "", 14));
 			l.add(new Item(6, 1, "Soft UI sounds for every screen.", "", 12));
 			l.add(new Item(6, 2, "Click ripples, sparkles and glow.", "", 12));
@@ -153,8 +158,10 @@ public class ConfigScreen extends Screen {
 		if (id != 91) focused = false;
 		if (id < 0) return;
 		long now = System.nanoTime();
-		if (now - lastActionNs < 220_000_000L) return; // de-duplicate event + polling paths
-		lastActionNs = now;
+		long guard = id >= 300 ? 70_000_000L : 220_000_000L; // keyboard keys may repeat quickly
+		if (id == lastActionId && now - lastActionNs < guard) return; // de-duplicate event + polling paths
+		if (id != lastActionId && now - lastActionNs < 40_000_000L) return;
+		lastActionNs = now; lastActionId = id;
 		Config c = Config.INSTANCE;
 		if (id != 20 && dragging) { dragging = false; lastTickStep = -1; Config.save(); }
 		if (id >= 60 && id < 64) { if (tab != id - 60) { tab = id - 60; tabStartNs = now; } click(); }
@@ -190,6 +197,15 @@ public class ConfigScreen extends Screen {
 			t.set.accept((id - 200) % 2 == 0); Config.save(); click();
 		}
 		else if (id == 91) { focused = true; click(); }
+		else if (id == 93) { // back to the normal look
+			c.skin = false; Config.save(); applyTheme(c.theme); click();
+			toast = "Default UI"; toastUntil = System.nanoTime() + 1_800_000_000L;
+		}
+		else if (id >= 300 && id < 333) { // on-screen keyboard (works without the phone keyboard)
+			if (id == 331) { if (field.length() > 0) field.setLength(field.length() - 1); }
+			else if (id == 332) submitCode();
+			else { focused = true; addChar(id == 330 ? ' ' : 'a' + (id - 300), false); }
+		}
 		else if (id == 92) { click(); submitCode(); }
 		else if (id == 90) { // tap the title 5 times = same as typing the secret code (for phones without a keyboard)
 			titleTaps = (now - lastTitleTap < 1_500_000_000L) ? titleTaps + 1 : 1;
@@ -461,7 +477,9 @@ public class ConfigScreen extends Screen {
 		// ---- sidebar
 		int y = bodyY + 4;
 		if (flat) { // Action skin: the banner image supplied by the user
-			y += Banner.draw(g, sbx + 4, y, sw0 - 8) + 4;
+			int bw = sw0 - 8, bh = bw * 157 / 276;
+			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 368, 209, 368, 209);
+			y += bh + 4;
 		} else if (bodyH >= 170) {
 			rrGrad(g, sbx + 4, y, sw0 - 8, 36, 4, lerp(MINT, CARD, 0.6f), lerp(PINK, CARD, 0.6f));
 			Icons.logo(g, sbx + (sw0 - 32) / 2, y + 2, 1);
@@ -483,6 +501,12 @@ public class ConfigScreen extends Screen {
 			Icons.style(g, TAB_ICON[i], th.x + 5, th.y + 1, 1, 255);
 			tx(g, font, TAB_NAMES[i], th.x + 25, th.y + 5, sel ? WHITE : MUTED);
 			y += 19;
+		}
+
+		if (flat) {
+			Hit dflt = add(sbx + 4, y + 4, sw0 - 8, 14, 93);
+			btn(g, dflt.x, dflt.y, dflt.w, dflt.h, 4, lerp(CARD2, CARD3, hv(93)));
+			textC(g, "Default UI", dflt.x + dflt.w / 2, dflt.y + 3, TXT);
 		}
 
 		// ---- content header
@@ -668,6 +692,32 @@ public class ConfigScreen extends Screen {
 				rr(g, en.x, en.y + 1, en.w, en.h, 4, 0xFFB5902A);
 				rr(g, en.x, en.y, en.w, en.h, 4, lerp(YEL, 0xFFFFFFFF, hv(92) * 0.4f));
 				textC(g, "Enter", en.x + en.w / 2, en.y + 6, DARK);
+			}
+			case 8 -> {
+				String[] kr = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
+				int kw = (w - 9 * 2) / 10;
+				for (int r = 0; r < 3; r++) {
+					int rw = kr[r].length() * (kw + 2) - 2 + (r == 2 ? kw * 2 + 4 : 0);
+					int rx = x + (w - rw) / 2;
+					for (int i = 0; i < kr[r].length(); i++) {
+						int kx2 = rx + i * (kw + 2);
+						Hit kh = add(kx2, y + r * 16, kw, 14, 300 + (kr[r].charAt(i) - 'a'));
+						btn(g, kh.x, kh.y, kh.w, kh.h, 3, lerp(CARD2, CARD3, hv(kh.id)));
+						textC(g, String.valueOf(kr[r].charAt(i)).toUpperCase(), kh.x + kh.w / 2, kh.y + 3, TXT);
+					}
+					if (r == 2) {
+						int bx2 = rx + kr[r].length() * (kw + 2);
+						Hit bs = add(bx2, y + r * 16, kw * 2 + 2, 14, 331);
+						btn(g, bs.x, bs.y, bs.w, bs.h, 3, lerp(CARD2, PINK, hv(331)));
+						textC(g, "<-", bs.x + bs.w / 2, bs.y + 3, TXT);
+					}
+				}
+				Hit sp = add(x + (w - 154) / 2, y + 48, 110, 14, 330);
+				btn(g, sp.x, sp.y, sp.w, sp.h, 3, lerp(CARD2, CARD3, hv(330)));
+				textC(g, "space", sp.x + sp.w / 2, sp.y + 3, TXT);
+				Hit en2 = add(sp.x + sp.w + 4, y + 48, 40, 14, 332);
+				btn(g, en2.x, en2.y, en2.w, en2.h, 3, lerp(YEL, 0xFFFFFFFF, hv(332) * 0.4f));
+				textC(g, "Enter", en2.x + en2.w / 2, en2.y + 3, DARK);
 			}
 			default -> tx(g, font, it.s1, x, y + 2, it.a == 0 ? YEL : MUTED);
 		}
