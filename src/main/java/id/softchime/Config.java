@@ -14,10 +14,10 @@ public class Config {
 	public static Config INSTANCE = new Config();
 
 	public String style = SoundStyle.SOFT_CHIME.name();
-	public float volume = 0.8f;
+	public float volume = 0.5f;
 	public boolean clickSound = true;
 	public boolean openCloseSound = true;
-	public boolean hoverSound = true;
+	public boolean hoverSound = false;
 	public boolean cursorRing = true;
 	public boolean clickParticles = true;
 	public boolean animations = true;
@@ -25,7 +25,7 @@ public class Config {
 	public boolean reanimatedCompat = true;
 	public boolean optionsButton = true;
 	/** Plays your own voice recordings (voice_<key>.ogg) when menus open. Silent if none installed. */
-	public boolean voiceLines = true;
+	public boolean voiceLines = false;
 
 	public SoundStyle style() {
 		try { return SoundStyle.valueOf(style); } catch (Exception e) { return SoundStyle.SOFT_CHIME; }
