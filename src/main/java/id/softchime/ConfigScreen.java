@@ -478,7 +478,7 @@ public class ConfigScreen extends Screen {
 		int y = bodyY + 4;
 		if (flat) { // Action skin: the banner image supplied by the user
 			int bw = sw0 - 8, bh = bw * 157 / 276;
-			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 368, 209, 368, 209);
+			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 414, 235, 414, 235);
 			y += bh + 4;
 		} else if (bodyH >= 170) {
 			rrGrad(g, sbx + 4, y, sw0 - 8, 36, 4, lerp(MINT, CARD, 0.6f), lerp(PINK, CARD, 0.6f));
