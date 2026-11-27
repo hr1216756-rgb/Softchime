@@ -110,7 +110,7 @@ public class ConfigScreen extends Screen {
 			int cw = (iw - 12) / 4;
 			for (int i = page * PER; i < Math.min(NS, page * PER + PER); i++) {
 				int sl = i - page * PER;
-				hits.add(new Hit(ix + (sl % 4) * (cw + 4), y + (sl / 4) * (cardH + 4), cw, cardH, 10 + i));
+				hits.add(new Hit(ix + (sl % 4) * (cw + 4), y + (sl / 4) * (cardH + 4), cw, cardH, 100 + i));
 			}
 			hits.add(new Hit(ix + iw - 46, y - 14, 20, 13, 60));
 			hits.add(new Hit(ix + iw - 20, y - 14, 20, 13, 61));
@@ -154,13 +154,13 @@ public class ConfigScreen extends Screen {
 		Config c = Config.INSTANCE;
 		if (id != 20 && dragging) { dragging = false; lastTickStep = -1; Config.save(); }
 		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
-		else if (id >= 10 && id < 10 + NS) {
-			SoundStyle st = SoundStyle.values()[id - 10];
+		else if (id >= 100 && id < 100 + NS) {
+			SoundStyle st = SoundStyle.values()[id - 100];
 			c.style = st.name(); Config.save();
-			pulse[id - 10] = 1f;
+			pulse[id - 100] = 1f;
 			Sounds.play(st, Sounds.Type.CLICK); // instant preview of the style you picked
 			Hit hh = hit(id);
-			if (hh != null && c.clickParticles) UiFx.burst(hh.x + hh.w / 2f, hh.y + hh.h / 2f, ACCENT[id - 10]);
+			if (hh != null && c.clickParticles) UiFx.burst(hh.x + hh.w / 2f, hh.y + hh.h / 2f, ACCENT[id - 100]);
 		} else if (id == 20) { dragging = true; lastMoveNs = System.nanoTime(); lastMx = mx; setVolumeFrom(mx); }
 		else if (id == 21 || id == 22) {
 			c.volume = Math.max(0f, Math.min(1f, Math.round((c.volume + (id == 22 ? 0.05f : -0.05f)) * 20) / 20f));
@@ -289,7 +289,7 @@ public class ConfigScreen extends Screen {
 		float k = Math.min(1f, dt * 14f);
 		tabPos += (tab - tabPos) * k;
 		for (int i = 0; i < NS; i++) {
-			hoverT[i] += ((hoverId == 10 + i ? 1f : 0f) - hoverT[i]) * k;
+			hoverT[i] += ((hoverId == 100 + i ? 1f : 0f) - hoverT[i]) * k;
 			pulse[i] = Math.max(0, pulse[i] - dt * 3.5f);
 		}
 		for (int i = 0; i < toggles.size(); i++)
@@ -363,7 +363,7 @@ public class ConfigScreen extends Screen {
 		g.text(font, pg, px + pw - 12 - 46 - 5 - font.width(pg), y + 1, MUTED);
 		SoundStyle cur = c.style();
 		for (int i = 0; i < NS; i++) {
-			Hit hh = hit(10 + i);
+			Hit hh = hit(100 + i);
 			if (hh == null) continue;
 			boolean sel = cur.ordinal() == i;
 			float ent = c.animations ? ease(((System.nanoTime() - pageStartNs) / 1e9f - (i % PER) * 0.05f) / 0.25f) : 1f;
