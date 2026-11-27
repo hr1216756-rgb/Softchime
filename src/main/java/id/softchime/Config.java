@@ -17,6 +17,7 @@ public class Config {
 	public float volume = 0.5f;
 	public boolean clickSound = true;
 	public boolean openCloseSound = true;
+	public int theme = 0;
 	public boolean hoverSound = false;
 	public boolean cursorRing = true;
 	public boolean clickParticles = true;

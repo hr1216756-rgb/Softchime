@@ -20,7 +20,7 @@ public final class UiFx {
 
 	private static final List<Ripple> RIPPLES = new ArrayList<>();
 	private static final List<Particle> PARTICLES = new ArrayList<>();
-	private static final int[] PALETTE = {0xFFD84A, 0xFFFFFF, 0xFFE9A0, 0xBFE3FF};
+	static int[] PALETTE = {0xFFD84A, 0xFFFFFF, 0xFFE9A0, 0xBFE3FF};
 
 	public static final boolean REANIMATED = FabricLoader.getInstance().isModLoaded("reanimated");
 	private static long openedAt = 0;

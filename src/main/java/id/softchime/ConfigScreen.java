@@ -17,14 +17,31 @@ import java.util.function.Supplier;
 
 /** Custom-drawn settings panel (Sound / Effects tabs). Open with N or from the Options screen. */
 public class ConfigScreen extends Screen {
-	// palette taken from the mod icon
-	private static final int CARD = 0xFF221C45, CARD2 = 0xFF2D2659, CARD3 = 0xFF3A3170, DEEP = 0xFF1A1538;
-	private static final int MINT = 0xFF6BF5D0, YEL = 0xFFFFD866, PINK = 0xFFFF5FA2, WHITE = 0xFFFFFFFF;
-	private static final int MUTED = 0xFFA79FD6, OFF = 0xFF4A4378;
+	// themes: CARD, CARD2, CARD3, DEEP, HDR, A1, A2, A3, MUTED, DARK, SEL1, SEL2, TITLE-SHADOW
+	private static final String[] THEME_NAMES = {"Night", "Sakura", "Ocean", "Forest", "Sunset", "Graphite"};
+	private static final int[][] THEMES = {
+		{0xFF221C45, 0xFF2D2659, 0xFF3A3170, 0xFF1A1538, 0xFF2E2766, 0xFF6BF5D0, 0xFFFFD866, 0xFFFF5FA2, 0xFFA79FD6, 0xFF2B2455, 0xFF3B3470, 0xFF46397F, 0xFFB03A78},
+		{0xFF3A1A2E, 0xFF4F2640, 0xFF66324F, 0xFF2A1121, 0xFF5A2A47, 0xFFFFB7D5, 0xFFFFE3A3, 0xFFFF6FA8, 0xFFD9A3BF, 0xFF3A1A2E, 0xFF6A3454, 0xFF7A3F61, 0xFF8A2A5C},
+		{0xFF10243F, 0xFF16345A, 0xFF1F4673, 0xFF0B1A30, 0xFF1B3F6B, 0xFF5CE1E6, 0xFF9AD1FF, 0xFF7C8CFF, 0xFF8FB4D9, 0xFF10243F, 0xFF20507F, 0xFF2A5E92, 0xFF1E5AA0},
+		{0xFF14301F, 0xFF1C4029, 0xFF285636, 0xFF0E2216, 0xFF215A33, 0xFF7DFF8A, 0xFFE8F29A, 0xFFFFB86B, 0xFF9CC9A8, 0xFF14301F, 0xFF2C6240, 0xFF367551, 0xFF1F7A3A},
+		{0xFF2F1B3F, 0xFF43255A, 0xFF5A3175, 0xFF220F30, 0xFF4A2A66, 0xFFFFB36B, 0xFFFFE066, 0xFFFF6B8B, 0xFFC3A3DE, 0xFF2F1B3F, 0xFF63367F, 0xFF743F93, 0xFFA03A5A},
+		{0xFF1E1F26, 0xFF2A2C36, 0xFF383B48, 0xFF15161B, 0xFF2B2D3A, 0xFFE6E9F5, 0xFFFFE066, 0xFF9AA5FF, 0xFF9EA3B5, 0xFF1E1F26, 0xFF3A3D4C, 0xFF464A5C, 0xFF4A4F8A},
+	};
+	private static int CARD, CARD2, CARD3, DEEP, HDR, MINT, YEL, PINK, MUTED, DARK, SEL1, SEL2, TSH;
+	private static final int WHITE = 0xFFFFFFFF;
+	private static final int OFF = 0xFF4A4378;
+
+	public static void applyTheme(int i) {
+		int[] t = THEMES[Math.max(0, Math.min(THEMES.length - 1, i))];
+		CARD = t[0]; CARD2 = t[1]; CARD3 = t[2]; DEEP = t[3]; HDR = t[4]; MINT = t[5]; YEL = t[6]; PINK = t[7];
+		MUTED = t[8]; DARK = t[9]; SEL1 = t[10]; SEL2 = t[11]; TSH = t[12];
+		UiFx.PALETTE = new int[] {YEL & 0xFFFFFF, 0xFFFFFF, MINT & 0xFFFFFF, PINK & 0xFFFFFF};
+	}
+	static { applyTheme(0); }
 
 	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "Music Box", "Drop", "Harp", "Kalimba", "Shimmer", "Piano"};
 	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap", "soft whisper", "water bloop", "silky strings", "thumb piano", "twinkly stars", "felt piano"};
-	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFB48CFF, 0xFF5CE1E6, 0xFFF2D27A, 0xFFD9A066, 0xFFB8F5FF, 0xFFE6E6F0};
+	private static final int[] ACCENT = {0xFFFFD866, 0xFF6BD6FF, 0xFFE8903A, 0xFF6BF5D0, 0xFF7DFF8A, 0xFFFF5FA2, 0xFFB48CFF, 0xFF5CE1E6, 0xFFF2D27A, 0xFFD9A066, 0xFFB8F5FF, 0xFFE6E6F0};
 	private static final int NS = SoundStyle.values().length;
 
 	private record Hit(int x, int y, int w, int h, int id) {
@@ -63,6 +80,7 @@ public class ConfigScreen extends Screen {
 	public ConfigScreen(Screen parent) {
 		super(Component.literal("Soft Chime UI"));
 		this.parent = parent;
+		applyTheme(Config.INSTANCE.theme);
 	}
 
 	// ---------------------------------------------------------------- layout
@@ -100,9 +118,8 @@ public class ConfigScreen extends Screen {
 
 		hits.add(new Hit(px + pw - 22, py + 6, 16, 16, 51)); // close
 		int tabY = py + headerH;
-		int tw = (iw - 4) / 2;
-		hits.add(new Hit(ix, tabY, tw + 2, 20, 0));
-		hits.add(new Hit(ix + tw + 2, tabY, iw - tw - 2, 20, 1));
+		int tw = (iw - 8) / 3;
+		for (int i = 0; i < 3; i++) hits.add(new Hit(ix + i * (tw + 4), tabY, tw + (i == 2 ? 0 : 4), 20, i));
 
 		int y = tabY + 28;
 		if (tab == 0) {
@@ -122,6 +139,10 @@ public class ConfigScreen extends Screen {
 			y += 26 + 6;
 			int chw = (iw - 12) / 4;
 			for (int i = 0; i < 4; i++) hits.add(new Hit(ix + i * (chw + 4), y, chw, 18, 30 + i));
+		} else if (tab == 2) {
+			int cw = (iw - 4) / 2;
+			for (int i = 0; i < THEMES.length; i++)
+				hits.add(new Hit(ix + (i % 2) * (cw + 4), y + (i / 2) * 26, cw, 22, 70 + i));
 		} else {
 			int cw = (iw - 4) / 2;
 			for (int i = 0; i < toggles.size(); i++)
@@ -153,7 +174,7 @@ public class ConfigScreen extends Screen {
 		lastActionNs = now;
 		Config c = Config.INSTANCE;
 		if (id != 20 && dragging) { dragging = false; lastTickStep = -1; Config.save(); }
-		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
+		if (id <= 2) { if (tab != id) { tab = id; layout(); } click(); }
 		else if (id >= 100 && id < 100 + NS) {
 			SoundStyle st = SoundStyle.values()[id - 100];
 			c.style = st.name(); Config.save();
@@ -162,6 +183,11 @@ public class ConfigScreen extends Screen {
 			Hit hh = hit(id);
 			if (hh != null && c.clickParticles) UiFx.burst(hh.x + hh.w / 2f, hh.y + hh.h / 2f, ACCENT[id - 100]);
 		} else if (id == 20) { dragging = true; lastMoveNs = System.nanoTime(); lastMx = mx; setVolumeFrom(mx); }
+		else if (id >= 70 && id < 70 + THEMES.length) {
+			c.theme = id - 70; applyTheme(c.theme); Config.save(); click();
+			Hit th = hit(id);
+			if (th != null && c.clickParticles) UiFx.burst(th.x + th.w / 2f, th.y + th.h / 2f, YEL & 0xFFFFFF);
+		}
 		else if (id == 21 || id == 22) {
 			c.volume = Math.max(0f, Math.min(1f, Math.round((c.volume + (id == 22 ? 0.05f : -0.05f)) * 20) / 20f));
 			Sounds.slide(c.volume); Config.save();
@@ -301,14 +327,14 @@ public class ConfigScreen extends Screen {
 		rr(g, px - 1, py + 2 + oy, pw + 2, ph + 2, 6, 0x55000000);
 		rrGrad(g, px - 1, py - 1 + oy, pw + 2, ph + 2, 6, MINT, PINK);
 		rr(g, px, py + oy, pw, ph, 5, CARD);
-		g.fillGradient(px + 1, py + 5 + oy, px + pw - 1, py + headerH - 2 + oy, 0xFF2E2766, CARD);
-		g.fill(px + 5, py + 1 + oy, px + pw - 5, py + 5 + oy, 0xFF2E2766);
+		g.fillGradient(px + 1, py + 5 + oy, px + pw - 1, py + headerH - 2 + oy, HDR, CARD);
+		g.fill(px + 5, py + 1 + oy, px + pw - 5, py + 5 + oy, HDR);
 
 		// ---- header: logo + title
 		Icons.logo(g, px + 10, py + (headerH - 32) / 2 + oy, 1);
 		int tx = px + 48, ty = py + headerH / 2 - 10 + oy;
 		Component title = Component.literal("Soft Chime UI").withStyle(ChatFormatting.BOLD);
-		g.text(font, title, tx + 1, ty + 1, 0xFFB03A78);
+		g.text(font, title, tx + 1, ty + 1, TSH);
 		g.text(font, title, tx, ty, YEL);
 		g.text(font, "UI sounds & click effects  v" + VERSION, tx, ty + 12, MUTED);
 		// close button
@@ -323,16 +349,17 @@ public class ConfigScreen extends Screen {
 
 		// ---- tabs
 		int ix = px + 12, iw = pw - 24, tabY = py + headerH + oy;
-		int tw = (iw - 4) / 2;
+		int tw = (iw - 8) / 3;
 		rr(g, ix, tabY, iw, 20, 5, DEEP);
-		int indX = ix + 2 + Math.round(tabPos * (tw + 2));
+		int indX = ix + 2 + Math.round(tabPos * (tw + 4));
 		rr(g, indX, tabY + 2, tw, 16, 4, YEL);
-		textC(g, "Sound", ix + tw / 2 + 1, tabY + 6, tab == 0 ? 0xFF2B2455 : MUTED);
-		textC(g, "Effects", ix + tw + 2 + (iw - tw - 2) / 2, tabY + 6, tab == 1 ? 0xFF2B2455 : MUTED);
+		String[] tabNames = {"Sound", "Effects", "Theme"};
+		for (int i = 0; i < 3; i++) textC(g, tabNames[i], ix + i * (tw + 4) + tw / 2 + 1, tabY + 6, tab == i ? DARK : MUTED);
 
 		int y = py + headerH + 28 + oy;
 		if (tab == 0) drawSoundTab(g, font, t, y, oy);
-		else drawEffectsTab(g, font, oy);
+		else if (tab == 1) drawEffectsTab(g, font, oy);
+		else drawThemeTab(g, font, t, oy);
 
 		// ---- footer
 		Hit done = hit(50);
@@ -340,7 +367,7 @@ public class ConfigScreen extends Screen {
 			int dy = done.y + oy;
 			rr(g, done.x, dy + 2, done.w, done.h, 5, 0xFFB5902A);
 			rr(g, done.x, dy, done.w, done.h, 5, hoverId == 50 ? 0xFFFFE9A0 : YEL);
-			textC(g, "Done", done.x + done.w / 2, dy + 7, 0xFF2B2455);
+			textC(g, "Done", done.x + done.w / 2, dy + 7, DARK);
 			if (hint) textC(g, "Press N anytime to open this menu", px + pw / 2, dy + done.h + 5, MUTED);
 		}
 	}
@@ -372,7 +399,7 @@ public class ConfigScreen extends Screen {
 			rr(g, cx, cy, cw, chh, 5, lerp(CARD2, CARD3, hoverT[i]));
 			if (sel) {
 				rr(g, cx - 1, cy - 1, cw + 2, chh + 2, 6, YEL);
-				rr(g, cx, cy, cw, chh, 5, lerp(0xFF3B3470, 0xFF46397F, hoverT[i]));
+				rr(g, cx, cy, cw, chh, 5, lerp(SEL1, SEL2, hoverT[i]));
 				if (c.animations) {
 					int ga = (int) (70 + 90 * (0.5 + 0.5 * Math.sin(t * 4)));
 					g.outline(cx - 2, cy - 2, cw + 4, chh + 4, (ga << 24) | (ACCENT[i] & 0xFFFFFF));
@@ -426,6 +453,24 @@ public class ConfigScreen extends Screen {
 			int[] tri = {1, 2, 3, 2, 1};
 			for (int r = 0; r < 5; r++) g.fill(startX, cy + 6 + r, startX + tri[r], cy + 7 + r, MINT);
 			g.text(font, names[i], startX + 10, cy + 5, WHITE);
+		}
+	}
+
+	private void drawThemeTab(GuiGraphicsExtractor g, Font font, float t, int oy) {
+		Config c = Config.INSTANCE;
+		for (int i = 0; i < THEMES.length; i++) {
+			Hit hh = hit(70 + i);
+			if (hh == null) continue;
+			int[] th = THEMES[i];
+			int cy = hh.y + oy;
+			boolean sel = c.theme == i, hv = hoverId == 70 + i;
+			if (sel) {
+				rr(g, hh.x - 1, cy - 1, hh.w + 2, hh.h + 2, 6, th[6]);
+				if (c.animations) g.outline(hh.x - 2, cy - 2, hh.w + 4, hh.h + 4, (((int) (70 + 90 * (0.5 + 0.5 * Math.sin(t * 4)))) << 24) | (th[6] & 0xFFFFFF));
+			}
+			rr(g, hh.x, cy, hh.w, hh.h, 5, hv ? th[2] : th[1]);
+			for (int k = 0; k < 3; k++) rr(g, hh.x + 6 + k * 9, cy + 5, 8, 12, 3, th[5 + k]);
+			g.text(font, THEME_NAMES[i], hh.x + 38, cy + 7, WHITE);
 		}
 	}
 
