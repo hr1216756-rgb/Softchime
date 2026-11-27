@@ -228,13 +228,21 @@ public class ConfigScreen extends Screen {
 		else { toast = "Wrong code"; toastUntil = System.nanoTime() + 1_800_000_000L; Sounds.play(Sounds.Type.CLOSE); }
 	}
 
+	private int lastKeyChar = -1;
+	private long lastKeyNs = 0;
+
+	/** Some launchers send letters as key presses, others as characters: accept both, never twice. */
+	private void addChar(int cp, boolean fromKey) {
+		long now = System.nanoTime();
+		if (fromKey) { lastKeyChar = cp; lastKeyNs = now; }
+		else if (cp == lastKeyChar && now - lastKeyNs < 80_000_000L) { lastKeyChar = -1; return; }
+		if (cp >= 32 && cp != 127 && field.length() < 24) field.appendCodePoint(cp);
+		if (field.toString().toLowerCase().replaceAll("[^a-z]", "").equals(CODE)) submitCode(); // no Enter needed
+	}
+
 	@Override
 	public boolean charTyped(CharacterEvent e) {
-		if (focused) {
-			int cp = e.codepoint();
-			if (cp >= 32 && cp != 127 && field.length() < 24) field.appendCodePoint(cp);
-			return true;
-		}
+		if (focused) { addChar(e.codepoint(), false); return true; }
 		return super.charTyped(e);
 	}
 
@@ -258,6 +266,8 @@ public class ConfigScreen extends Screen {
 			if (k == 259 && field.length() > 0) field.setLength(field.length() - 1); // backspace
 			else if (k == 257 || k == 335) submitCode(); // enter
 			else if (k == 256) focused = false; // escape: leave the box
+			else if (k >= 65 && k <= 90) addChar(k + 32, true);
+			else if (k == 32) addChar(32, true);
 			return true;
 		}
 		if (k >= 65 && k <= 90) { // A-Z
