@@ -72,6 +72,7 @@ public class ConfigScreen extends Screen {
 		toggles.add(new Toggle("Click effect", () -> c.clickParticles, v -> c.clickParticles = v));
 		toggles.add(new Toggle("Animations", () -> c.animations, v -> c.animations = v));
 		if (UiFx.REANIMATED) toggles.add(new Toggle("ReAnimated compat", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v));
+		toggles.add(new Toggle("Voice lines", () -> c.voiceLines, v -> c.voiceLines = v));
 		toggles.add(new Toggle("Options button", () -> c.optionsButton, v -> c.optionsButton = v));
 		for (int i = 0; i < toggles.size(); i++) swT[i] = toggles.get(i).get().get() ? 1f : 0f;
 		layout();

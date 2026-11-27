@@ -1,5 +1,6 @@
 {
   "subtitles.softchime.ui": "UI sound",
   "key.softchime.config": "Open Soft Chime settings",
-  "key.categories.softchime": "Soft Chime UI"
+  "key.categories.softchime": "Soft Chime UI",
+  "subtitles.softchime.voice": "Voice"
 }

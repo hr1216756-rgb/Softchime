@@ -24,6 +24,8 @@ public class Config {
 	/** When ReAnimated is installed: let it handle open/hover animations, we keep sounds + cursor + particles. */
 	public boolean reanimatedCompat = true;
 	public boolean optionsButton = true;
+	/** Plays your own voice recordings (voice_<key>.ogg) when menus open. Silent if none installed. */
+	public boolean voiceLines = true;
 
 	public SoundStyle style() {
 		try { return SoundStyle.valueOf(style); } catch (Exception e) { return SoundStyle.SOFT_CHIME; }
