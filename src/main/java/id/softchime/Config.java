@@ -25,7 +25,6 @@ public class Config {
 	public boolean reanimatedCompat = true;
 	public boolean optionsButton = true;
 	/** Plays your own voice recordings (voice_<key>.ogg) when menus open. Silent if none installed. */
-	public boolean voiceLines = false;
 
 	public SoundStyle style() {
 		try { return SoundStyle.valueOf(style); } catch (Exception e) { return SoundStyle.SOFT_CHIME; }

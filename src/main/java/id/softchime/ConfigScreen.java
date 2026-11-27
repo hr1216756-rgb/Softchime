@@ -22,9 +22,9 @@ public class ConfigScreen extends Screen {
 	private static final int MINT = 0xFF6BF5D0, YEL = 0xFFFFD866, PINK = 0xFFFF5FA2, WHITE = 0xFFFFFFFF;
 	private static final int MUTED = 0xFFA79FD6, OFF = 0xFF4A4378;
 
-	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "ASMR", "Music Box"};
+	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "Music Box"};
 	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap", "soft whisper"};
-	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFFF9EC8, 0xFFB48CFF};
+	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFB48CFF};
 	private static final int NS = SoundStyle.values().length;
 
 	private record Hit(int x, int y, int w, int h, int id) {
@@ -72,7 +72,6 @@ public class ConfigScreen extends Screen {
 		toggles.add(new Toggle("Click effect", () -> c.clickParticles, v -> c.clickParticles = v));
 		toggles.add(new Toggle("Animations", () -> c.animations, v -> c.animations = v));
 		if (UiFx.REANIMATED) toggles.add(new Toggle("ReAnimated compat", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v));
-		toggles.add(new Toggle("Voice lines", () -> c.voiceLines, v -> c.voiceLines = v));
 		toggles.add(new Toggle("Options button", () -> c.optionsButton, v -> c.optionsButton = v));
 		for (int i = 0; i < toggles.size(); i++) swT[i] = toggles.get(i).get().get() ? 1f : 0f;
 		layout();
