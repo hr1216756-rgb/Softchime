@@ -460,16 +460,8 @@ public class ConfigScreen extends Screen {
 
 		// ---- sidebar
 		int y = bodyY + 4;
-		if (flat) { // original banner for the Action skin (same slot, own artwork)
-			int bw = sw0 - 8, bx = sbx + 4;
-			g.fillGradient(bx, y, bx + bw, y + 42, 0xFFF7BE45, 0xFFE0802A);
-			for (int i = 0; i < bw; i += 12) g.fill(bx + i, y + 36, bx + Math.min(bw, i + 6), y + 42, 0xFF2D6FD0);
-			for (int i = 0; i < 6; i++) g.fill(bx + 3 + (i * 17) % Math.max(1, bw - 6), y + 3 + (i * 7) % 20, bx + 5 + (i * 17) % Math.max(1, bw - 6), y + 5 + (i * 7) % 20, 0x88FFFFFF);
-			Icons.logo(g, bx + 3, y + 3, 1);
-			Component b1 = bold("SOFT"), b2 = bold("CHIME");
-			g.text(font, b1, bx + 38, y + 9, 0xFF3A1D00); g.text(font, b1, bx + 37, y + 8, 0xFFFFFFFF);
-			g.text(font, b2, bx + 38, y + 21, 0xFF3A1D00); g.text(font, b2, bx + 37, y + 20, 0xFFFFFFFF);
-			y += 46;
+		if (flat) { // Action skin: the banner image supplied by the user
+			y += Banner.draw(g, sbx + 4, y, sw0 - 8) + 4;
 		} else if (bodyH >= 170) {
 			rrGrad(g, sbx + 4, y, sw0 - 8, 36, 4, lerp(MINT, CARD, 0.6f), lerp(PINK, CARD, 0.6f));
 			Icons.logo(g, sbx + (sw0 - 32) / 2, y + 2, 1);
