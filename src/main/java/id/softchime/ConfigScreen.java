@@ -105,12 +105,11 @@ public class ConfigScreen extends Screen {
 	private List<Item> items() {
 		List<Item> l = new ArrayList<>();
 		if (tab == 0) {
-			l.add(new Item(0, SoundStyle.SOFT_CHIME.ordinal(), "Sound Style", "Pick the sound family", 22));
-			for (int r = 0; r < (NS + 3) / 4; r++) l.add(new Item(1, r, "", "", 22));
 			l.add(new Item(0, SoundStyle.CRYSTAL_GLASS.ordinal(), "Volume", "Drag, or use + and -", 22));
 			l.add(new Item(2, 0, "", "", 24));
-			l.add(new Item(0, SoundStyle.RETRO_CHIP.ordinal(), "Preview", "Hear the current style", 22));
 			l.add(new Item(3, 0, "", "", 20));
+			l.add(new Item(0, SoundStyle.SOFT_CHIME.ordinal(), "Sound Style", "Pick the sound family", 22));
+			for (int r = 0; r < (NS + 3) / 4; r++) l.add(new Item(1, r, "", "", 22));
 		} else if (tab == 1) {
 			for (int i = 0; i < toggles.size(); i++) l.add(new Item(4, i, "", "", 26));
 		} else if (tab == 2) {
