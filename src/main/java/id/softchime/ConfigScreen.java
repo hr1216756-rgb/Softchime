@@ -129,12 +129,6 @@ public class ConfigScreen extends Screen {
 	}
 
 	// ---------------------------------------------------------------- input
-	/** Touch launchers report a tap as the RIGHT button (btn1), so accept any held button. */
-	private static boolean held() {
-		var mh = Minecraft.getInstance().mouseHandler;
-		return mh.isLeftPressed() || mh.isRightPressed();
-	}
-
 	private static void click() { Sounds.play(Sounds.Type.CLICK); }
 
 	/** Called from the Fabric click event (UiFx.onClick) - works reliably with touch launchers too. */

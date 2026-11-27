@@ -27,30 +27,24 @@ public final class Sounds {
 
 	private static final int[] PENTA = {0, 2, 4, 7, 9, 12};
 
-	/** Slider sound: the style's own slide timbre, pitch climbs the pentatonic scale as the value goes up (0..1). */
-	public static void playSlide(float frac) {
-		frac = Math.max(0f, Math.min(1f, frac));
-		double semis = -5 + frac * 15; // about 1.25 octaves
-		int oct = (int) Math.floor(semis / 12.0);
-		double r = semis - 12.0 * oct;
-		int best = 0;
-		for (int n : PENTA) if (Math.abs(n - r) < Math.abs(best - r)) best = n;
-		float pitch = (float) Math.pow(2.0, (oct * 12 + best) / 12.0);
-		float vol = Config.INSTANCE.volume;
-		if (vol <= 0f) return;
-		Minecraft.getInstance().getSoundManager()
-			.play(SimpleSoundInstance.forUI(get(Config.INSTANCE.style(), Type.SLIDE), Math.max(0.5f, Math.min(2f, pitch)), vol));
-	}
-
 	public static void play(Type type) { play(Config.INSTANCE.style(), type); }
 
 	public static void play(SoundStyle style, Type type) {
 		play(style, type, 0.97f + (float) Math.random() * 0.06f); // tiny variation, feels alive
 	}
 
-	/** Slider sound: each style has its own sample, pitch follows the slider position (0..1). */
+	private static final int[] PENTA = {0, 2, 4, 7, 9, 12};
+
+	/** Slider sound: each style has its own sample; pitch climbs a pentatonic scale with the slider position (0..1). */
 	public static void slide(float position) {
-		play(Config.INSTANCE.style(), Type.SLIDE, 0.8f + Math.max(0f, Math.min(1f, position)) * 0.7f);
+		position = Math.max(0f, Math.min(1f, position));
+		double semis = -5 + position * 15; // about 1.25 octaves
+		int oct = (int) Math.floor(semis / 12.0);
+		double r = semis - 12.0 * oct;
+		int best = 0;
+		for (int n : PENTA) if (Math.abs(n - r) < Math.abs(best - r)) best = n;
+		float pitch = (float) Math.pow(2.0, (oct * 12 + best) / 12.0);
+		play(Config.INSTANCE.style(), Type.SLIDE, Math.max(0.5f, Math.min(2f, pitch)));
 	}
 
 	public static void play(SoundStyle style, Type type, float pitch) {
