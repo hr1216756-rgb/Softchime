@@ -185,6 +185,11 @@ public class ConfigScreen extends Screen {
 			Toggle t = toggles.get((id - 200) / 2);
 			t.set.accept((id - 200) % 2 == 0); Config.save(); click();
 		}
+		else if (id == 90) { // tap the title 5 times = same as typing the secret code (for phones without a keyboard)
+			titleTaps = (now - lastTitleTap < 1_500_000_000L) ? titleTaps + 1 : 1;
+			lastTitleTap = now;
+			if (titleTaps >= 5) { titleTaps = 0; toggleSkin(); } else click();
+		}
 		else if (id == 50 || id == 51) { click(); onClose(); }
 	}
 
@@ -206,6 +211,19 @@ public class ConfigScreen extends Screen {
 	private long toastUntil = 0;
 	private String toast = "";
 
+	private int titleTaps = 0;
+	private long lastTitleTap = 0;
+
+	private void toggleSkin() {
+		Config c = Config.INSTANCE;
+		c.skin = !c.skin; Config.save();
+		applyTheme(c.skin ? 6 : c.theme);
+		toast = c.skin ? "Action skin ON" : "Action skin OFF";
+		toastUntil = System.nanoTime() + 2_200_000_000L;
+		Sounds.play(Sounds.Type.OPEN);
+		UiFx.burst(this.width / 2f, this.height / 2f, YEL & 0xFFFFFF);
+	}
+
 	@Override
 	public boolean keyPressed(KeyEvent e) {
 		int k = e.key();
@@ -214,13 +232,7 @@ public class ConfigScreen extends Screen {
 			while (!typed.isEmpty() && !CODE.startsWith(typed)) typed = typed.substring(1);
 			if (typed.equals(CODE)) {
 				typed = "";
-				Config c = Config.INSTANCE;
-				c.skin = !c.skin; Config.save();
-				applyTheme(c.skin ? 6 : c.theme);
-				toast = c.skin ? "Action skin ON" : "Action skin OFF";
-				toastUntil = System.nanoTime() + 2_200_000_000L;
-				Sounds.play(Sounds.Type.OPEN);
-				UiFx.burst(this.width / 2f, this.height / 2f, YEL & 0xFFFFFF);
+				toggleSkin();
 				return true;
 			}
 			if (k == InputConstants.KEY_N && typed.length() <= 1) { typed = ""; onClose(); return true; }
@@ -363,6 +375,7 @@ public class ConfigScreen extends Screen {
 		g.text(font, title, px + (pw - tw0) / 2 + 1, py + 5, flat ? 0 : TSH);
 		g.text(font, title, px + (pw - tw0) / 2, py + 4, TC);
 		Hit cl = add(px + pw - 16, py + 2, 13, 13, 51);
+		add(px + 40, py + 1, pw - 80, 16, 90);
 		rr(g, cl.x, cl.y, 13, 13, 4, lerp(CARD3, PINK, hv(51)));
 		for (int i = 0; i < 5; i++) {
 			g.fill(cl.x + 4 + i, cl.y + 4 + i, cl.x + 5 + i, cl.y + 5 + i, TXT);
