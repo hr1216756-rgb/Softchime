@@ -646,5 +646,329 @@
         "stream": false
       }
     ]
+  },
+  "zen_bowl_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:zen_bowl_click",
+        "stream": false
+      }
+    ]
+  },
+  "zen_bowl_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:zen_bowl_open",
+        "stream": false
+      }
+    ]
+  },
+  "zen_bowl_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:zen_bowl_close",
+        "stream": false
+      }
+    ]
+  },
+  "zen_bowl_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:zen_bowl_hover",
+        "stream": false
+      }
+    ]
+  },
+  "zen_bowl_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:zen_bowl_tick",
+        "stream": false
+      }
+    ]
+  },
+  "zen_bowl_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:zen_bowl_slide",
+        "stream": false
+      }
+    ]
+  },
+  "guitar_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:guitar_click",
+        "stream": false
+      }
+    ]
+  },
+  "guitar_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:guitar_open",
+        "stream": false
+      }
+    ]
+  },
+  "guitar_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:guitar_close",
+        "stream": false
+      }
+    ]
+  },
+  "guitar_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:guitar_hover",
+        "stream": false
+      }
+    ]
+  },
+  "guitar_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:guitar_tick",
+        "stream": false
+      }
+    ]
+  },
+  "guitar_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:guitar_slide",
+        "stream": false
+      }
+    ]
+  },
+  "celesta_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:celesta_click",
+        "stream": false
+      }
+    ]
+  },
+  "celesta_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:celesta_open",
+        "stream": false
+      }
+    ]
+  },
+  "celesta_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:celesta_close",
+        "stream": false
+      }
+    ]
+  },
+  "celesta_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:celesta_hover",
+        "stream": false
+      }
+    ]
+  },
+  "celesta_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:celesta_tick",
+        "stream": false
+      }
+    ]
+  },
+  "celesta_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:celesta_slide",
+        "stream": false
+      }
+    ]
+  },
+  "vibes_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:vibes_click",
+        "stream": false
+      }
+    ]
+  },
+  "vibes_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:vibes_open",
+        "stream": false
+      }
+    ]
+  },
+  "vibes_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:vibes_close",
+        "stream": false
+      }
+    ]
+  },
+  "vibes_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:vibes_hover",
+        "stream": false
+      }
+    ]
+  },
+  "vibes_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:vibes_tick",
+        "stream": false
+      }
+    ]
+  },
+  "vibes_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:vibes_slide",
+        "stream": false
+      }
+    ]
+  },
+  "wood_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_click",
+        "stream": false
+      }
+    ]
+  },
+  "wood_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_open",
+        "stream": false
+      }
+    ]
+  },
+  "wood_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_close",
+        "stream": false
+      }
+    ]
+  },
+  "wood_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_hover",
+        "stream": false
+      }
+    ]
+  },
+  "wood_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_tick",
+        "stream": false
+      }
+    ]
+  },
+  "wood_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:wood_slide",
+        "stream": false
+      }
+    ]
+  },
+  "pad_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:pad_click",
+        "stream": false
+      }
+    ]
+  },
+  "pad_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:pad_open",
+        "stream": false
+      }
+    ]
+  },
+  "pad_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:pad_close",
+        "stream": false
+      }
+    ]
+  },
+  "pad_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:pad_hover",
+        "stream": false
+      }
+    ]
+  },
+  "pad_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:pad_tick",
+        "stream": false
+      }
+    ]
+  },
+  "pad_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:pad_slide",
+        "stream": false
+      }
+    ]
   }
 }

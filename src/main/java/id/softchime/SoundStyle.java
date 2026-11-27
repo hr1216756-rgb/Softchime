@@ -12,7 +12,13 @@ public enum SoundStyle {
 	HARP("harp", "Harp"),
 	KALIMBA("kalimba", "Kalimba"),
 	STAR_SHIMMER("star_shimmer", "Star Shimmer"),
-	SOFT_PIANO("soft_piano", "Soft Piano");
+	SOFT_PIANO("soft_piano", "Soft Piano"),
+	ZEN_BOWL("zen_bowl", "Zen Bowl"),
+	GUITAR("guitar", "Gentle Guitar"),
+	CELESTA("celesta", "Celesta"),
+	VIBES("vibes", "Vibraphone"),
+	WOOD("wood", "Wood Block"),
+	PAD("pad", "Soft Pad");
 
 	public final String id;
 	public final String label;
