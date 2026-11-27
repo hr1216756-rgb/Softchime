@@ -172,6 +172,24 @@ public final class Icons {
 			".M.....pp.......",
 			"................"
 		}
+		,{
+			"................",
+			".......V........",
+			".......VV.......",
+			".......V.V......",
+			".......V........",
+			"....P..V........",
+			"..VVVVVVVVVV....",
+			".VWWWWWWWWWWV...",
+			".VYYYYYYYYYYV...",
+			".VYOYOYYOYOYV...",
+			".VYYYYYYYYYYV...",
+			".VVVVVVVVVVVV...",
+			".K..........K...",
+			"................",
+			"................",
+			"................"
+		}
 	};
 
 	private static final String[] LOGO = {

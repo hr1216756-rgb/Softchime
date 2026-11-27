@@ -430,5 +430,59 @@
         "stream": false
       }
     ]
+  },
+  "music_box_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:music_box_click",
+        "stream": false
+      }
+    ]
+  },
+  "music_box_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:music_box_open",
+        "stream": false
+      }
+    ]
+  },
+  "music_box_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:music_box_close",
+        "stream": false
+      }
+    ]
+  },
+  "music_box_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:music_box_hover",
+        "stream": false
+      }
+    ]
+  },
+  "music_box_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:music_box_tick",
+        "stream": false
+      }
+    ]
+  },
+  "music_box_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:music_box_slide",
+        "stream": false
+      }
+    ]
   }
 }

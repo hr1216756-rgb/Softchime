@@ -22,9 +22,9 @@ public class ConfigScreen extends Screen {
 	private static final int MINT = 0xFF6BF5D0, YEL = 0xFFFFD866, PINK = 0xFFFF5FA2, WHITE = 0xFFFFFFFF;
 	private static final int MUTED = 0xFFA79FD6, OFF = 0xFF4A4378;
 
-	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "ASMR"};
+	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "ASMR", "Music Box"};
 	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap", "soft whisper"};
-	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFFF9EC8};
+	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFFF9EC8, 0xFFB48CFF};
 	private static final int NS = SoundStyle.values().length;
 
 	private record Hit(int x, int y, int w, int h, int id) {

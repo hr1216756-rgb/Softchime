@@ -7,7 +7,8 @@ public enum SoundStyle {
 	CRYSTAL_GLASS("crystal_glass", "Crystal Glass"),
 	RETRO_CHIP("retro_chip", "Retro Chip"),
 	SOFT_TAP("soft_tap", "Soft Tap"),
-	ASMR("asmr", "ASMR Whisper");
+	ASMR("asmr", "ASMR Whisper"),
+	MUSIC_BOX("music_box", "Music Box");
 
 	public final String id;
 	public final String label;
