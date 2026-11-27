@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
@@ -122,6 +123,8 @@ public class ConfigScreen extends Screen {
 			l.add(new Item(0, SoundStyle.WATER_DROP.ordinal(), "Colour Theme", "Changes the whole menu", 22));
 			for (int r = 0; r < 2; r++) l.add(new Item(5, r, "", "", 24));
 		} else {
+			l.add(new Item(0, SoundStyle.STAR_SHIMMER.ordinal(), "Secret Code", "Tap the box, type the code, press Enter", 22));
+			l.add(new Item(7, 0, "", "", 24));
 			l.add(new Item(6, 0, "Soft Chime UI  v" + VERSION, "", 14));
 			l.add(new Item(6, 1, "Soft UI sounds for every screen.", "", 12));
 			l.add(new Item(6, 2, "Click ripples, sparkles and glow.", "", 12));
@@ -147,6 +150,7 @@ public class ConfigScreen extends Screen {
 	/** Called from the Fabric click event (UiFx.onClick) - works reliably with touch launchers too. */
 	public void handleClick(double mx, double my, int button) {
 		int id = hitAt(mx, my);
+		if (id != 91) focused = false;
 		if (id < 0) return;
 		long now = System.nanoTime();
 		if (now - lastActionNs < 220_000_000L) return; // de-duplicate event + polling paths
@@ -185,6 +189,8 @@ public class ConfigScreen extends Screen {
 			Toggle t = toggles.get((id - 200) / 2);
 			t.set.accept((id - 200) % 2 == 0); Config.save(); click();
 		}
+		else if (id == 91) { focused = true; click(); }
+		else if (id == 92) { click(); submitCode(); }
 		else if (id == 90) { // tap the title 5 times = same as typing the secret code (for phones without a keyboard)
 			titleTaps = (now - lastTitleTap < 1_500_000_000L) ? titleTaps + 1 : 1;
 			lastTitleTap = now;
@@ -211,6 +217,27 @@ public class ConfigScreen extends Screen {
 	private long toastUntil = 0;
 	private String toast = "";
 
+	private final StringBuilder field = new StringBuilder();
+	private boolean focused = false;
+
+	private void submitCode() {
+		String n = field.toString().toLowerCase().replaceAll("[^a-z]", "");
+		field.setLength(0);
+		focused = false;
+		if (n.equals(CODE)) toggleSkin();
+		else { toast = "Wrong code"; toastUntil = System.nanoTime() + 1_800_000_000L; Sounds.play(Sounds.Type.CLOSE); }
+	}
+
+	@Override
+	public boolean charTyped(CharacterEvent e) {
+		if (focused) {
+			int cp = e.codepoint();
+			if (cp >= 32 && cp != 127 && field.length() < 24) field.appendCodePoint(cp);
+			return true;
+		}
+		return super.charTyped(e);
+	}
+
 	private int titleTaps = 0;
 	private long lastTitleTap = 0;
 
@@ -227,6 +254,12 @@ public class ConfigScreen extends Screen {
 	@Override
 	public boolean keyPressed(KeyEvent e) {
 		int k = e.key();
+		if (focused) { // typing into the secret-code box
+			if (k == 259 && field.length() > 0) field.setLength(field.length() - 1); // backspace
+			else if (k == 257 || k == 335) submitCode(); // enter
+			else if (k == 256) focused = false; // escape: leave the box
+			return true;
+		}
 		if (k >= 65 && k <= 90) { // A-Z
 			typed += (char) (k + 32);
 			while (!typed.isEmpty() && !CODE.startsWith(typed)) typed = typed.substring(1);
@@ -569,6 +602,24 @@ public class ConfigScreen extends Screen {
 					for (int q = 0; q < 3; q++) rr(g, cx + 4 + q * 7, y + 4, 6, hh.h - 8, 2, th[5 + q]);
 					g.text(font, fit(font, THEME_NAMES[i], tw3 - 28), cx + 26, y + (hh.h - 8) / 2, contrast(THEMES[i][1]));
 				}
+			}
+			case 7 -> {
+				int enW = 40;
+				Hit fb = add(x, y, w - enW - 4, 20, 91);
+				rr(g, fb.x, fb.y, fb.w, fb.h, 4, DEEP);
+				if (focused) g.outline(fb.x - 1, fb.y - 1, fb.w + 2, fb.h + 2, YEL);
+				String shown = field.toString();
+				int maxW = fb.w - 10;
+				while (shown.length() > 1 && font.width(shown) > maxW) shown = shown.substring(1);
+				if (shown.isEmpty() && !focused) g.text(font, "Tap here to type...", fb.x + 5, fb.y + 6, MUTED);
+				else {
+					g.text(font, shown, fb.x + 5, fb.y + 6, WHITE);
+					if (focused && ((int) (t * 2) % 2 == 0)) g.fill(fb.x + 5 + font.width(shown), fb.y + 4, fb.x + 6 + font.width(shown), fb.y + 15, YEL);
+				}
+				Hit en = add(x + w - enW, y, enW, 20, 92);
+				rr(g, en.x, en.y + 1, en.w, en.h, 4, 0xFFB5902A);
+				rr(g, en.x, en.y, en.w, en.h, 4, lerp(YEL, 0xFFFFFFFF, hv(92) * 0.4f));
+				textC(g, "Enter", en.x + en.w / 2, en.y + 6, DARK);
 			}
 			default -> g.text(font, it.s1, x, y + 2, it.a == 0 ? YEL : MUTED);
 		}
