@@ -25,8 +25,6 @@ public final class Sounds {
 		});
 	}
 
-	private static final int[] PENTA = {0, 2, 4, 7, 9, 12};
-
 	public static void play(Type type) { play(Config.INSTANCE.style(), type); }
 
 	public static void play(SoundStyle style, Type type) {
