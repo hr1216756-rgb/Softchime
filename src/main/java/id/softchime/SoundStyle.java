@@ -7,7 +7,12 @@ public enum SoundStyle {
 	CRYSTAL_GLASS("crystal_glass", "Crystal Glass"),
 	RETRO_CHIP("retro_chip", "Retro Chip"),
 	SOFT_TAP("soft_tap", "Soft Tap"),
-	MUSIC_BOX("music_box", "Music Box");
+	MUSIC_BOX("music_box", "Music Box"),
+	WATER_DROP("water_drop", "Water Drop"),
+	HARP("harp", "Harp"),
+	KALIMBA("kalimba", "Kalimba"),
+	STAR_SHIMMER("star_shimmer", "Star Shimmer"),
+	SOFT_PIANO("soft_piano", "Soft Piano");
 
 	public final String id;
 	public final String label;

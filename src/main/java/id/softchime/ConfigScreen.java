@@ -22,9 +22,9 @@ public class ConfigScreen extends Screen {
 	private static final int MINT = 0xFF6BF5D0, YEL = 0xFFFFD866, PINK = 0xFFFF5FA2, WHITE = 0xFFFFFFFF;
 	private static final int MUTED = 0xFFA79FD6, OFF = 0xFF4A4378;
 
-	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "Music Box"};
-	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap", "soft whisper"};
-	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFB48CFF};
+	private static final String[] NAMES = {"Chime", "Bubble", "Marimba", "Crystal", "Retro", "Tap", "Music Box", "Drop", "Harp", "Kalimba", "Shimmer", "Piano"};
+	private static final String[] TAGS = {"gentle bell", "playful pop", "warm wood", "sparkly glass", "8-bit beep", "subtle tap", "soft whisper", "water bloop", "silky strings", "thumb piano", "twinkly stars", "felt piano"};
+	private static final int[] ACCENT = {YEL, 0xFF6BD6FF, 0xFFE8903A, MINT, 0xFF7DFF8A, PINK, 0xFFB48CFF, 0xFF5CE1E6, 0xFFF2D27A, 0xFFD9A066, 0xFFB8F5FF, 0xFFE6E6F0};
 	private static final int NS = SoundStyle.values().length;
 
 	private record Hit(int x, int y, int w, int h, int id) {
@@ -43,8 +43,13 @@ public class ConfigScreen extends Screen {
 	private int lastTickStep = -1;
 
 	private float tabPos = 0;
-	private final float[] hoverT = new float[8];
-	private final float[] pulse = new float[8];
+	private final float[] hoverT = new float[16];
+	private final float[] pulse = new float[16];
+	private static final int PER = 8;
+	private int page = 0;
+	private long pageStartNs = System.nanoTime();
+	private double lastMx = -1;
+	private long lastMoveNs = 0;
 	private final float[] swT = new float[12];
 	private int hoverId = -1;
 	private long lastActionNs = 0;
@@ -103,11 +108,17 @@ public class ConfigScreen extends Screen {
 		if (tab == 0) {
 			y += 11;
 			int cw = (iw - 12) / 4;
-			for (int i = 0; i < NS; i++)
-				hits.add(new Hit(ix + (i % 4) * (cw + 4), y + (i / 4) * (cardH + 4), cw, cardH, 10 + i));
+			for (int i = page * PER; i < Math.min(NS, page * PER + PER); i++) {
+				int sl = i - page * PER;
+				hits.add(new Hit(ix + (sl % 4) * (cw + 4), y + (sl / 4) * (cardH + 4), cw, cardH, 10 + i));
+			}
+			hits.add(new Hit(ix + iw - 46, y - 14, 20, 13, 60));
+			hits.add(new Hit(ix + iw - 20, y - 14, 20, 13, 61));
 			y += 2 * cardH + 4 + 8;
-			sx = ix; sy = y + 12; sw = iw;
-			hits.add(new Hit(ix, y, iw, 26, 20));
+			sx = ix + 24; sy = y + 12; sw = iw - 48;
+			hits.add(new Hit(ix, sy - 5, 20, 16, 21));
+			hits.add(new Hit(ix + iw - 20, sy - 5, 20, 16, 22));
+			hits.add(new Hit(sx - 4, y, sw + 8, 26, 20));
 			y += 26 + 6;
 			int chw = (iw - 12) / 4;
 			for (int i = 0; i < 4; i++) hits.add(new Hit(ix + i * (chw + 4), y, chw, 18, 30 + i));
@@ -141,13 +152,25 @@ public class ConfigScreen extends Screen {
 		if (now - lastActionNs < 250_000_000L) return; // de-duplicate event + polling paths
 		lastActionNs = now;
 		Config c = Config.INSTANCE;
+		if (id != 20 && dragging) { dragging = false; lastTickStep = -1; Config.save(); }
 		if (id == 0 || id == 1) { if (tab != id) { tab = id; layout(); } click(); }
 		else if (id >= 10 && id < 10 + NS) {
 			SoundStyle st = SoundStyle.values()[id - 10];
 			c.style = st.name(); Config.save();
 			pulse[id - 10] = 1f;
 			Sounds.play(st, Sounds.Type.CLICK); // instant preview of the style you picked
-		} else if (id == 20) { dragging = true; setVolumeFrom(mx); }
+			Hit hh = hit(id);
+			if (hh != null && c.clickParticles) UiFx.burst(hh.x + hh.w / 2f, hh.y + hh.h / 2f, ACCENT[id - 10]);
+		} else if (id == 20) { dragging = true; lastMoveNs = System.nanoTime(); lastMx = mx; setVolumeFrom(mx); }
+		else if (id == 21 || id == 22) {
+			c.volume = Math.max(0f, Math.min(1f, Math.round((c.volume + (id == 22 ? 0.05f : -0.05f)) * 20) / 20f));
+			Sounds.slide(c.volume); Config.save();
+		}
+		else if (id == 60 || id == 61) {
+			int pages = (NS + PER - 1) / PER;
+			page = (page + (id == 61 ? 1 : pages - 1)) % pages;
+			pageStartNs = System.nanoTime(); layout(); click();
+		}
 		else if (id >= 30 && id < 34) Sounds.play(Sounds.Type.values()[id - 30]); // CLICK, OPEN, CLOSE, HOVER
 		else if (id >= 40 && id < 40 + toggles.size()) {
 			Toggle t = toggles.get(id - 40);
@@ -245,7 +268,10 @@ public class ConfigScreen extends Screen {
 
 		// slider drag: follow the pointer while the button is held
 		if (dragging) {
-			if (anyPressed()) setVolumeFrom(mx);
+			// touch launchers often report no "button held" while a finger slides: keep following the pointer while it moves
+			if (mx != lastMx) { lastMx = mx; lastMoveNs = now; }
+			boolean nearY = my >= sy - 30 && my <= sy + 36;
+			if (anyPressed() || (nearY && now - lastMoveNs < 600_000_000L)) setVolumeFrom(mx);
 			else { dragging = false; lastTickStep = -1; Config.save(); }
 		}
 
@@ -322,17 +348,35 @@ public class ConfigScreen extends Screen {
 	private void drawSoundTab(GuiGraphicsExtractor g, Font font, float t, int y, int oy) {
 		Config c = Config.INSTANCE;
 		g.text(font, "SOUND STYLE", px + 12, y, MUTED);
+		for (int id = 60; id <= 61; id++) { // page arrows
+			Hit ah = hit(id);
+			if (ah == null) continue;
+			boolean hv = hoverId == id;
+			rr(g, ah.x, ah.y + oy, ah.w, ah.h, 4, hv ? CARD3 : CARD2);
+			int ax = ah.x + ah.w / 2, ay = ah.y + oy + ah.h / 2;
+			for (int r = 0; r < 3; r++) {
+				int dx = id == 60 ? r : -r;
+				g.fill(ax + dx - (id == 60 ? 1 : 0), ay - 2 + r, ax + dx + (id == 60 ? 0 : 1), ay + 3 - r, WHITE);
+			}
+		}
+		String pg = (page + 1) + "/" + ((NS + PER - 1) / PER);
+		g.text(font, pg, px + pw - 12 - 46 - 5 - font.width(pg), y + 1, MUTED);
 		SoundStyle cur = c.style();
 		for (int i = 0; i < NS; i++) {
 			Hit hh = hit(10 + i);
 			if (hh == null) continue;
 			boolean sel = cur.ordinal() == i;
-			int cx = hh.x, cy = hh.y + oy - (int) (hoverT[i] * 2), cw = hh.w, chh = hh.h;
+			float ent = c.animations ? ease(((System.nanoTime() - pageStartNs) / 1e9f - (i % PER) * 0.05f) / 0.25f) : 1f;
+			int cx = hh.x, cy = hh.y + oy - (int) (hoverT[i] * 2) + (int) ((1 - ent) * 9), cw = hh.w, chh = hh.h;
 			rr(g, cx, cy + 2, cw, chh, 5, 0x55000000);
 			rr(g, cx, cy, cw, chh, 5, lerp(CARD2, CARD3, hoverT[i]));
 			if (sel) {
 				rr(g, cx - 1, cy - 1, cw + 2, chh + 2, 6, YEL);
 				rr(g, cx, cy, cw, chh, 5, lerp(0xFF3B3470, 0xFF46397F, hoverT[i]));
+				if (c.animations) {
+					int ga = (int) (70 + 90 * (0.5 + 0.5 * Math.sin(t * 4)));
+					g.outline(cx - 2, cy - 2, cw + 4, chh + 4, (ga << 24) | (ACCENT[i] & 0xFFFFFF));
+				}
 			}
 			// accent stripe on the left
 			g.fill(cx + 2, cy + 5, cx + 4, cy + chh - 5, ACCENT[i]);
@@ -358,6 +402,14 @@ public class ConfigScreen extends Screen {
 			rr(g, sx, ty, tw2, 6, 3, DEEP);
 			int kx = sx + 6 + Math.round(c.volume * (tw2 - 12));
 			for (int i = 0; i < kx - sx; i++) g.fill(sx + i, ty + 1, sx + i + 1, ty + 5, lerp(MINT, YEL, i / (float) tw2));
+			for (int id = 21; id <= 22; id++) {
+				Hit bh = hit(id);
+				if (bh == null) continue;
+				rr(g, bh.x, bh.y + oy, bh.w, bh.h, 4, hoverId == id ? CARD3 : CARD2);
+				int bx = bh.x + bh.w / 2, by = bh.y + oy + bh.h / 2;
+				g.fill(bx - 3, by, bx + 4, by + 1, WHITE);
+				if (id == 22) g.fill(bx, by - 3, bx + 1, by + 4, WHITE);
+			}
 			rr(g, kx - 6, ty - 3, 12, 12, 6, PINK);
 			rr(g, kx - 5, ty - 2, 10, 10, 5, WHITE);
 		}

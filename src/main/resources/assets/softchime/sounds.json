@@ -376,5 +376,275 @@
         "stream": false
       }
     ]
+  },
+  "water_drop_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:water_drop_click",
+        "stream": false
+      }
+    ]
+  },
+  "water_drop_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:water_drop_open",
+        "stream": false
+      }
+    ]
+  },
+  "water_drop_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:water_drop_close",
+        "stream": false
+      }
+    ]
+  },
+  "water_drop_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:water_drop_hover",
+        "stream": false
+      }
+    ]
+  },
+  "water_drop_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:water_drop_tick",
+        "stream": false
+      }
+    ]
+  },
+  "water_drop_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:water_drop_slide",
+        "stream": false
+      }
+    ]
+  },
+  "harp_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:harp_click",
+        "stream": false
+      }
+    ]
+  },
+  "harp_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:harp_open",
+        "stream": false
+      }
+    ]
+  },
+  "harp_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:harp_close",
+        "stream": false
+      }
+    ]
+  },
+  "harp_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:harp_hover",
+        "stream": false
+      }
+    ]
+  },
+  "harp_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:harp_tick",
+        "stream": false
+      }
+    ]
+  },
+  "harp_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:harp_slide",
+        "stream": false
+      }
+    ]
+  },
+  "kalimba_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:kalimba_click",
+        "stream": false
+      }
+    ]
+  },
+  "kalimba_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:kalimba_open",
+        "stream": false
+      }
+    ]
+  },
+  "kalimba_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:kalimba_close",
+        "stream": false
+      }
+    ]
+  },
+  "kalimba_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:kalimba_hover",
+        "stream": false
+      }
+    ]
+  },
+  "kalimba_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:kalimba_tick",
+        "stream": false
+      }
+    ]
+  },
+  "kalimba_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:kalimba_slide",
+        "stream": false
+      }
+    ]
+  },
+  "star_shimmer_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:star_shimmer_click",
+        "stream": false
+      }
+    ]
+  },
+  "star_shimmer_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:star_shimmer_open",
+        "stream": false
+      }
+    ]
+  },
+  "star_shimmer_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:star_shimmer_close",
+        "stream": false
+      }
+    ]
+  },
+  "star_shimmer_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:star_shimmer_hover",
+        "stream": false
+      }
+    ]
+  },
+  "star_shimmer_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:star_shimmer_tick",
+        "stream": false
+      }
+    ]
+  },
+  "star_shimmer_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:star_shimmer_slide",
+        "stream": false
+      }
+    ]
+  },
+  "soft_piano_click": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_piano_click",
+        "stream": false
+      }
+    ]
+  },
+  "soft_piano_open": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_piano_open",
+        "stream": false
+      }
+    ]
+  },
+  "soft_piano_close": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_piano_close",
+        "stream": false
+      }
+    ]
+  },
+  "soft_piano_hover": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_piano_hover",
+        "stream": false
+      }
+    ]
+  },
+  "soft_piano_tick": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_piano_tick",
+        "stream": false
+      }
+    ]
+  },
+  "soft_piano_slide": {
+    "subtitle": "subtitles.softchime.ui",
+    "sounds": [
+      {
+        "name": "softchime:soft_piano_slide",
+        "stream": false
+      }
+    ]
   }
 }

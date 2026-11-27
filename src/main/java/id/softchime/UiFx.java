@@ -64,6 +64,24 @@ public final class UiFx {
 		}
 	}
 
+	/** Colourful burst (used when picking a sound style). */
+	public static void burst(float x, float y, int rgb) {
+		long now = System.currentTimeMillis();
+		RIPPLES.add(new Ripple(x, y, now));
+		for (int i = 0; i < 16; i++) {
+			Particle pt = new Particle();
+			double ang = i * Math.PI * 2 / 16 + Math.random() * 0.3;
+			double sp = 30 + Math.random() * 40;
+			pt.x = x; pt.y = y; pt.vx = (float) (Math.cos(ang) * sp); pt.vy = (float) (Math.sin(ang) * sp) - 14;
+			pt.t0 = now; pt.rgb = i % 3 == 0 ? 0xFFFFFF : rgb;
+			PARTICLES.add(pt);
+		}
+	}
+
+	private static final class Trail { float x, y; long t0; int rgb; }
+	private static final List<Trail> TRAIL = new ArrayList<>();
+	private static float lastTrailX = Float.NaN, lastTrailY;
+
 	/** Called after the screen has drawn itself. */
 	public static void render(Screen screen, GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
 		Minecraft mc = Minecraft.getInstance();
@@ -81,6 +99,20 @@ public final class UiFx {
 			}
 		}
 
+		// 1b) light sweep that glides across the screen once on open
+		if (ownAnim) {
+			float p = (now - openedAt) / 520f;
+			if (p >= 0 && p < 1) {
+				float e = 1 - (1 - p) * (1 - p);
+				int cxs = (int) (-40 + e * (screen.width + 80));
+				for (int k = 0; k < 6; k++) {
+					int a = (int) ((26 - k * 4) * (1 - p));
+					g.fill(cxs - 2 - k * 5, 0, cxs - k * 5 + 1, screen.height, argb(a, 0xFFF4C2));
+					g.fill(cxs + k * 5, 0, cxs + k * 5 + 3, screen.height, argb(a / 2, 0xBFE3FF));
+				}
+			}
+		}
+
 		// 2) hover detection (buttons, tabs, sliders, list entries ...)
 		AbstractWidget h = null;
 		for (var w : Screens.getWidgets(screen)) {
@@ -94,6 +126,13 @@ public final class UiFx {
 		if (h != null && ownAnim) {
 			float p = Math.min(1f, (now - hoverStart) / 140f);
 			g.outline(h.getX() - 1, h.getY() - 1, h.getWidth() + 2, h.getHeight() + 2, argb((int) (200 * p), 0xFFE066));
+			// shine: a soft white bar glides across the hovered widget
+			float sp = (now - hoverStart) / 300f;
+			if (sp >= 0 && sp < 1) {
+				int bx = h.getX() + (int) (sp * (h.getWidth() + 12)) - 12;
+				int x0 = Math.max(h.getX(), bx), x1 = Math.min(h.getX() + h.getWidth(), bx + 10);
+				if (x1 > x0) g.fill(x0, h.getY(), x1, h.getY() + h.getHeight(), argb((int) (70 * Math.sin(sp * Math.PI)), 0xFFFFFF));
+			}
 		}
 
 		// 3) slider drag ticks
@@ -128,6 +167,26 @@ public final class UiFx {
 			float y = p.y + p.vy * t + 50 * t * t; // tiny gravity
 			int size = life < 0.45f ? 2 : 1;
 			g.fill((int) x, (int) y, (int) x + size, (int) y + size, argb((int) (255 * (1 - life)), p.rgb));
+		}
+
+		// 4b) sparkle trail behind the pointer
+		if (cfg.cursorRing && ownAnim) {
+			if (Float.isNaN(lastTrailX) || Math.hypot(mouseX - lastTrailX, mouseY - lastTrailY) >= 5) {
+				Trail tr = new Trail();
+				tr.x = mouseX + (float) (Math.random() * 4 - 2); tr.y = mouseY + (float) (Math.random() * 4 - 2); tr.t0 = now;
+				tr.rgb = PALETTE[(int) (Math.random() * PALETTE.length)];
+				TRAIL.add(tr);
+				lastTrailX = mouseX; lastTrailY = mouseY;
+				if (TRAIL.size() > 40) TRAIL.remove(0);
+			}
+		}
+		TRAIL.removeIf(tr -> now - tr.t0 > 450);
+		for (Trail tr : TRAIL) {
+			float life = (now - tr.t0) / 450f;
+			int x = (int) tr.x, y = (int) (tr.y + life * 6);
+			int a = (int) (210 * (1 - life));
+			g.fill(x, y, x + 1, y + 1, argb(a, tr.rgb));
+			if (life < 0.5f) { g.fill(x - 1, y, x + 2, y + 1, argb(a / 2, tr.rgb)); g.fill(x, y - 1, x + 1, y + 2, argb(a / 2, tr.rgb)); }
 		}
 
 		// 5) cursor ring that follows the pointer
