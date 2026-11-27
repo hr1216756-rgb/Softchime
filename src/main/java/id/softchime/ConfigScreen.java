@@ -28,8 +28,11 @@ public class ConfigScreen extends Screen {
 		{0xFF14301F, 0xFF1C4029, 0xFF285636, 0xFF0E2216, 0xFF215A33, 0xFF7DFF8A, 0xFFE8F29A, 0xFFFFB86B, 0xFF9CC9A8, 0xFF14301F, 0xFF2C6240, 0xFF367551, 0xFF1F7A3A},
 		{0xFF2F1B3F, 0xFF43255A, 0xFF5A3175, 0xFF220F30, 0xFF4A2A66, 0xFFFFB36B, 0xFFFFE066, 0xFFFF6B8B, 0xFFC3A3DE, 0xFF2F1B3F, 0xFF63367F, 0xFF743F93, 0xFFA03A5A},
 		{0xFF1E1F26, 0xFF2A2C36, 0xFF383B48, 0xFF15161B, 0xFF2B2D3A, 0xFFE6E9F5, 0xFFFFE066, 0xFF9AA5FF, 0xFF9EA3B5, 0xFF1E1F26, 0xFF3A3D4C, 0xFF464A5C, 0xFF4A4F8A},
+		{0xFF353535, 0xFFD2D2D2, 0xFFF0F0F0, 0xFF222222, 0xFFE4E4E4, 0xFFF0A93B, 0xFFF0A93B, 0xFFE0902A, 0xFFBDBDBD, 0xFF161616, 0xFFF0A93B, 0xFFF6BC5E, 0xFF000000},
 	};
 	private static int CARD, CARD2, CARD3, DEEP, HDR, MINT, YEL, PINK, MUTED, DARK, SEL1, SEL2, TSH;
+	private static int TXT = 0xFFFFFFFF, MUTED2, TC, HC, SIDESEL;
+	private static boolean flat; // "Action" skin: square corners, grey panels, light buttons
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int OFF = 0xFF4A4378;
 
@@ -37,6 +40,9 @@ public class ConfigScreen extends Screen {
 		int[] t = THEMES[Math.max(0, Math.min(THEMES.length - 1, i))];
 		CARD = t[0]; CARD2 = t[1]; CARD3 = t[2]; DEEP = t[3]; HDR = t[4]; MINT = t[5]; YEL = t[6]; PINK = t[7];
 		MUTED = t[8]; DARK = t[9]; SEL1 = t[10]; SEL2 = t[11]; TSH = t[12];
+		flat = i == 6;
+		TXT = flat ? 0xFF161616 : 0xFFFFFFFF; MUTED2 = flat ? 0xFF5A5A5A : MUTED;
+		TC = flat ? 0xFF161616 : YEL; HC = flat ? 0xFFFFFFFF : YEL; SIDESEL = flat ? 0xFF4A4A4A : CARD3;
 		UiFx.PALETTE = new int[] {YEL & 0xFFFFFF, 0xFFFFFF, MINT & 0xFFFFFF, PINK & 0xFFFFFF};
 	}
 	static { applyTheme(0); }
@@ -84,7 +90,7 @@ public class ConfigScreen extends Screen {
 	public ConfigScreen(Screen parent) {
 		super(Component.literal("Soft Chime UI"));
 		this.parent = parent;
-		applyTheme(Config.INSTANCE.theme);
+		applyTheme(Config.INSTANCE.skin ? 6 : Config.INSTANCE.theme);
 	}
 
 	@Override
@@ -171,7 +177,7 @@ public class ConfigScreen extends Screen {
 		}
 		else if (id >= 30 && id < 34) Sounds.play(Sounds.Type.values()[id - 30]); // CLICK, OPEN, CLOSE, HOVER
 		else if (id >= 70 && id < 76) {
-			c.theme = id - 70; applyTheme(c.theme); Config.save(); click();
+			c.theme = id - 70; c.skin = false; applyTheme(c.theme); Config.save(); click();
 			Hit th = hit(id);
 			if (th != null && c.clickParticles) UiFx.burst(th.x + th.w / 2f, th.y + th.h / 2f, YEL & 0xFFFFFF);
 		}
@@ -194,9 +200,34 @@ public class ConfigScreen extends Screen {
 		if (step != lastTickStep) { lastTickStep = step; Sounds.slide(Config.INSTANCE.volume); }
 	}
 
+	// secret code: type "action and stuff" in this menu to switch to the grey "Action" skin (type it again to go back)
+	private static final String CODE = "actionandstuff";
+	private String typed = "";
+	private long toastUntil = 0;
+	private String toast = "";
+
 	@Override
 	public boolean keyPressed(KeyEvent e) {
-		if (e.key() == InputConstants.KEY_N) { onClose(); return true; }
+		int k = e.key();
+		if (k >= 65 && k <= 90) { // A-Z
+			typed += (char) (k + 32);
+			while (!typed.isEmpty() && !CODE.startsWith(typed)) typed = typed.substring(1);
+			if (typed.equals(CODE)) {
+				typed = "";
+				Config c = Config.INSTANCE;
+				c.skin = !c.skin; Config.save();
+				applyTheme(c.skin ? 6 : c.theme);
+				toast = c.skin ? "Action skin ON" : "Action skin OFF";
+				toastUntil = System.nanoTime() + 2_200_000_000L;
+				Sounds.play(Sounds.Type.OPEN);
+				UiFx.burst(this.width / 2f, this.height / 2f, YEL & 0xFFFFFF);
+				return true;
+			}
+			if (k == InputConstants.KEY_N && typed.length() <= 1) { typed = ""; onClose(); return true; }
+			return true; // part of the code: do not let N close the menu
+		}
+		if (k == 32) return true; // space is part of the phrase
+		if (k != 340 && k != 344 && k != 341 && k != 345) typed = "";
 		return super.keyPressed(e);
 	}
 
@@ -208,6 +239,7 @@ public class ConfigScreen extends Screen {
 
 	// ---------------------------------------------------------------- drawing helpers
 	private static void rr(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int c) {
+		if (flat) r = 0;
 		if (w <= 0 || h <= 0) return;
 		r = Math.min(r, Math.min(w, h) / 2);
 		g.fill(x, y + r, x + w, y + h - r, c);
@@ -229,6 +261,7 @@ public class ConfigScreen extends Screen {
 	}
 
 	private static void rrGrad(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int top, int bot) {
+		if (flat) r = 0;
 		for (int j = 0; j < h; j++) {
 			int inset = 0;
 			if (j < r) { double d = r - j - 0.5; inset = r - (int) Math.round(Math.sqrt(r * r - d * d)); }
@@ -240,6 +273,11 @@ public class ConfigScreen extends Screen {
 	private void textC(GuiGraphicsExtractor g, String s, int cx, int y, int color) {
 		Font f = getFont();
 		g.text(f, s, cx - f.width(s) / 2, y, color);
+	}
+
+	private static int contrast(int bg) {
+		int lum = (((bg >> 16) & 255) * 3 + ((bg >> 8) & 255) * 6 + (bg & 255)) / 10;
+		return lum > 150 ? 0xFF161616 : 0xFFFFFFFF;
 	}
 
 	private static float ease(float t) { t = Math.max(0, Math.min(1, t)); return 1 - (1 - t) * (1 - t) * (1 - t); }
@@ -316,25 +354,31 @@ public class ConfigScreen extends Screen {
 
 		// ---- shell + title bar
 		rr(g, px - 1, py + 2, pw + 2, ph + 2, 6, 0x55000000);
-		rrGrad(g, px - 1, py - 1, pw + 2, ph + 2, 6, MINT, PINK);
+		rrGrad(g, px - 1, py - 1, pw + 2, ph + 2, 6, flat ? 0xFF111111 : MINT, flat ? 0xFF111111 : PINK);
 		rr(g, px, py, pw, ph, 5, CARD);
-		g.fillGradient(px + 1, py + 3, px + pw - 1, py + 16, HDR, CARD);
+		if (flat) g.fill(px + 1, py + 1, px + pw - 1, py + 17, HDR); else g.fillGradient(px + 1, py + 3, px + pw - 1, py + 16, HDR, CARD);
 		g.fill(px + 4, py + 1, px + pw - 4, py + 3, HDR);
 		Component title = Component.literal("SOFT CHIME UI").withStyle(ChatFormatting.BOLD);
 		int tw0 = font.width(title);
-		g.text(font, title, px + (pw - tw0) / 2 + 1, py + 5, TSH);
-		g.text(font, title, px + (pw - tw0) / 2, py + 4, YEL);
+		g.text(font, title, px + (pw - tw0) / 2 + 1, py + 5, flat ? 0 : TSH);
+		g.text(font, title, px + (pw - tw0) / 2, py + 4, TC);
 		Hit cl = add(px + pw - 16, py + 2, 13, 13, 51);
 		rr(g, cl.x, cl.y, 13, 13, 4, lerp(CARD3, PINK, hv(51)));
 		for (int i = 0; i < 5; i++) {
-			g.fill(cl.x + 4 + i, cl.y + 4 + i, cl.x + 5 + i, cl.y + 5 + i, WHITE);
-			g.fill(cl.x + 8 - i, cl.y + 4 + i, cl.x + 9 - i, cl.y + 5 + i, WHITE);
+			g.fill(cl.x + 4 + i, cl.y + 4 + i, cl.x + 5 + i, cl.y + 5 + i, TXT);
+			g.fill(cl.x + 8 - i, cl.y + 4 + i, cl.x + 9 - i, cl.y + 5 + i, TXT);
 		}
 
 		int bodyY = py + 18, bodyH = ph - 20;
 		int sw0 = Math.max(74, Math.min(104, pw * 27 / 100));
 		int sbx = px + 4;
 		rr(g, sbx, bodyY, sw0, bodyH, 4, DEEP);
+
+		if (System.nanoTime() < toastUntil) {
+			int tw5 = font.width(toast);
+			rr(g, (this.width - tw5) / 2 - 6, py + ph + 4, tw5 + 12, 14, 3, HDR);
+			g.text(font, toast, (this.width - tw5) / 2, py + ph + 7, TC);
+		}
 
 		// ---- sidebar
 		int y = bodyY + 4;
@@ -353,8 +397,8 @@ public class ConfigScreen extends Screen {
 		for (int i = 0; i < 4; i++) {
 			Hit th = add(sbx + 2, y, sw0 - 4, 18, 60 + i);
 			boolean sel = tab == i;
-			if (sel) rr(g, th.x, th.y, th.w, th.h, 3, CARD3);
-			else if (hv(60 + i) > 0.02f) rr(g, th.x, th.y, th.w, th.h, 3, lerp(DEEP, CARD2, hv(60 + i)));
+			if (sel) rr(g, th.x, th.y, th.w, th.h, 3, SIDESEL);
+			else if (hv(60 + i) > 0.02f) rr(g, th.x, th.y, th.w, th.h, 3, lerp(DEEP, SIDESEL, hv(60 + i)));
 			if (sel) g.fill(th.x, th.y + 3, th.x + 2, th.y + th.h - 3, YEL);
 			Icons.style(g, TAB_ICON[i], th.x + 5, th.y + 1, 1, 255);
 			g.text(font, TAB_NAMES[i], th.x + 25, th.y + 5, sel ? WHITE : MUTED);
@@ -366,13 +410,13 @@ public class ConfigScreen extends Screen {
 		float tin = ease((now - tabStartNs) / 1e9f / 0.22f);
 		int hdrDx = c.animations ? (int) ((1 - tin) * 10) : 0;
 		Component ct = Component.literal(TAB_NAMES[tab].toUpperCase()).withStyle(ChatFormatting.BOLD);
-		g.text(font, ct, cx + hdrDx + 1, bodyY + 4, TSH);
-		g.text(font, ct, cx + hdrDx, bodyY + 3, YEL);
+		g.text(font, ct, cx + hdrDx + 1, bodyY + 4, flat ? 0 : TSH);
+		g.text(font, ct, cx + hdrDx, bodyY + 3, HC);
 		g.text(font, fit(font, TAB_SUB[tab], cw - 80), cx + hdrDx, bodyY + 14, MUTED);
 		// reset + scroll arrows
 		Hit rs = add(cx + cw - 32, bodyY + 2, 32, 12, 82);
 		rr(g, rs.x, rs.y, rs.w, rs.h, 3, lerp(CARD2, PINK, hv(82)));
-		textC(g, "Reset", rs.x + rs.w / 2, rs.y + 2, WHITE);
+		textC(g, "Reset", rs.x + rs.w / 2, rs.y + 2, TXT);
 
 		// ---- item list (discrete scrolling: only whole items that fit are drawn)
 		List<Item> items = items();
@@ -396,7 +440,7 @@ public class ConfigScreen extends Screen {
 			Hit ah = add(ax, bodyY + 2, 12, 12, up ? 80 : 81);
 			rr(g, ah.x, ah.y, 12, 12, 3, en ? lerp(CARD2, CARD3, hv(ah.id)) : DEEP);
 			int mxA = ah.x + 6, myA = ah.y + 6;
-			int col = en ? WHITE : OFF;
+			int col = en ? TXT : OFF;
 			for (int r = 0; r < 3; r++) {
 				int dy = up ? -1 + r : 1 - r;
 				g.fill(mxA - r, myA + dy, mxA + r + 1, myA + dy + 1, col);
@@ -440,7 +484,7 @@ public class ConfigScreen extends Screen {
 					g.fill(cx + 1, cy + 4, cx + 2, cy + hh.h - 4, ACCENT[i]);
 					int bounce = (int) (Math.sin(pulse[i] * Math.PI) * 3);
 					Icons.style(g, SoundStyle.values()[i], cx + 3, cy + (hh.h - 16) / 2 - bounce, 1, 255);
-					g.text(font, fit(font, NAMES[i], cw4 - 22), cx + 21, cy + (hh.h - 8) / 2, WHITE);
+					g.text(font, fit(font, NAMES[i], cw4 - 22), cx + 21, cy + (hh.h - 8) / 2, TXT);
 					if (sel) for (int b = 0; b < 3; b++) {
 						int bh = 1 + (int) (Math.abs(Math.sin(t * 6 + b * 1.7)) * 4);
 						g.fill(cx + cw4 - 7 + b * 2, cy + hh.h - 3 - bh, cx + cw4 - 6 + b * 2, cy + hh.h - 3, ACCENT[i]);
@@ -454,8 +498,8 @@ public class ConfigScreen extends Screen {
 				for (Hit bh : new Hit[] {mn, pl}) {
 					rr(g, bh.x, bh.y, bh.w, bh.h, 4, lerp(CARD2, CARD3, hv(bh.id)));
 					int bx = bh.x + bh.w / 2, by = bh.y + bh.h / 2;
-					g.fill(bx - 3, by, bx + 4, by + 1, WHITE);
-					if (bh.id == 22) g.fill(bx, by - 3, bx + 1, by + 4, WHITE);
+					g.fill(bx - 3, by, bx + 4, by + 1, TXT);
+					if (bh.id == 22) g.fill(bx, by - 3, bx + 1, by + 4, TXT);
 				}
 				sx = x + 20; sw = pl.x - 4 - sx; sy = y + 10;
 				add(sx - 4, y, sw + 8, it.h, 20);
@@ -477,7 +521,7 @@ public class ConfigScreen extends Screen {
 					int startX = ch.x + (ch.w - (tw3 + 10)) / 2;
 					int[] tri = {1, 2, 3, 2, 1};
 					for (int r = 0; r < 5; r++) g.fill(startX, ch.y + 5 + r, startX + tri[r], ch.y + 6 + r, MINT);
-					g.text(font, names[i], startX + 10, ch.y + 4, WHITE);
+					g.text(font, names[i], startX + 10, ch.y + 4, TXT);
 				}
 			}
 			case 4 -> {
@@ -486,31 +530,31 @@ public class ConfigScreen extends Screen {
 				rr(g, x, y, w, it.h - 2, 4, CARD2);
 				rr(g, x + 5, y + 8, 8, 8, 2, lerp(OFF, MINT, s));
 				int bw = 26, onX = x + w - 2 * bw - 6, offX = onX + bw + 2;
-				g.text(font, fit(font, tg.label, onX - x - 22), x + 18, y + 4, WHITE);
-				g.text(font, fit(font, tg.desc, onX - x - 22), x + 18, y + 14, MUTED);
+				g.text(font, fit(font, tg.label, onX - x - 22), x + 18, y + 4, TXT);
+				g.text(font, fit(font, tg.desc, onX - x - 22), x + 18, y + 14, MUTED2);
 				Hit on = add(onX, y + 5, bw, 14, 200 + it.a * 2);
 				Hit off = add(offX, y + 5, bw, 14, 201 + it.a * 2);
 				rr(g, on.x, on.y, bw, 14, 3, lerp(lerp(CARD3, CARD2, 0.3f), YEL, s));
 				rr(g, off.x, off.y, bw, 14, 3, lerp(lerp(CARD3, CARD2, 0.3f), YEL, 1 - s));
-				textC(g, "On", on.x + bw / 2, on.y + 3, s > 0.5f ? DARK : MUTED);
-				textC(g, "Off", off.x + bw / 2, off.y + 3, s <= 0.5f ? DARK : MUTED);
+				textC(g, "On", on.x + bw / 2, on.y + 3, s > 0.5f ? DARK : MUTED2);
+				textC(g, "Off", off.x + bw / 2, off.y + 3, s <= 0.5f ? DARK : MUTED2);
 			}
 			case 5 -> {
 				int tw3 = (w - 6) / 3;
 				for (int k = 0; k < 3; k++) {
 					int i = it.a * 3 + k;
-					if (i >= THEMES.length) break;
+					if (i >= 6) break;
 					int[] th = THEMES[i];
 					int cx = x + k * (tw3 + 3);
 					Hit hh = add(cx, y, tw3, it.h - 2, 70 + i);
-					boolean sel = c.theme == i;
+					boolean sel = !c.skin && c.theme == i;
 					if (sel) {
 						rr(g, cx - 1, y - 1, tw3 + 2, hh.h + 2, 5, th[6]);
 						if (c.animations) g.outline(cx - 2, y - 2, tw3 + 4, hh.h + 4, (((int) (70 + 90 * (0.5 + 0.5 * Math.sin(t * 4)))) << 24) | (th[6] & 0xFFFFFF));
 					}
 					rr(g, cx, y, tw3, hh.h, 4, lerp(th[1], th[2], hv(70 + i)));
 					for (int q = 0; q < 3; q++) rr(g, cx + 4 + q * 7, y + 4, 6, hh.h - 8, 2, th[5 + q]);
-					g.text(font, fit(font, THEME_NAMES[i], tw3 - 28), cx + 26, y + (hh.h - 8) / 2, WHITE);
+					g.text(font, fit(font, THEME_NAMES[i], tw3 - 28), cx + 26, y + (hh.h - 8) / 2, contrast(THEMES[i][1]));
 				}
 			}
 			default -> g.text(font, it.s1, x, y + 2, it.a == 0 ? YEL : MUTED);
