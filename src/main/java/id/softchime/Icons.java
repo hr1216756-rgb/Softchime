@@ -29,20 +29,31 @@ public final class Icons {
 	/** Action-skin icon: bevelled coloured tile (like the reference menu) holding the style's own glyph. */
 	public static void styleTile(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int size) {
 		int base = TILE[st.ordinal() % 4];
-		g.fill(x - 1, y - 1, x + size + 1, y + size + 1, 0xFF1A1030);
-		g.fill(x, y, x + size, y + size, base);
-		g.fill(x, y, x + size, y + 1, mix(base, 0xFFFFFFFF, 0.55f));
-		g.fill(x, y, x + 1, y + size, mix(base, 0xFFFFFFFF, 0.35f));
-		g.fill(x, y + size - 1, x + size, y + size, mix(base, 0xFF000000, 0.4f));
-		g.fill(x + size - 1, y, x + size, y + size, mix(base, 0xFF000000, 0.4f));
+		int dark = mix(base, 0xFF000000, 0.62f); // dark body so the glyph colours always stand out
+		g.fill(x - 1, y - 1, x + size + 1, y + size + 1, 0xFF120A22);
+		g.fill(x, y, x + size, y + size, dark);
+		g.fill(x, y, x + size, y + 1, base);
+		g.fill(x, y, x + 1, y + size, base);
+		g.fill(x, y + size - 1, x + size, y + size, mix(base, 0xFF000000, 0.5f));
+		g.fill(x + size - 1, y, x + size, y + size, mix(base, 0xFF000000, 0.5f));
 		String[] rows = ART[st.ordinal()];
-		int in = size - 2; // glyph area, sampled down from 16x16
+		int in = size - 2; // glyph area: 16x16 art averaged down (box filter) so it stays readable
 		for (int j = 0; j < in; j++) {
-			String row = rows[j * 16 / in];
+			int sy0 = j * 16 / in, sy1 = Math.max(sy0 + 1, (j + 1) * 16 / in);
 			for (int i = 0; i < in; i++) {
-				char c = row.charAt(i * 16 / in);
-				if (c == '.') continue;
-				g.fill(x + 1 + i, y + 1 + j, x + 2 + i, y + 2 + j, color(c));
+				int sx0 = i * 16 / in, sx1 = Math.max(sx0 + 1, (i + 1) * 16 / in);
+				int n = 0, tot = 0, r = 0, gg = 0, bb = 0;
+				for (int yy = sy0; yy < sy1 && yy < rows.length; yy++)
+					for (int xx = sx0; xx < sx1; xx++) {
+						tot++;
+						char c = rows[yy].charAt(xx);
+						if (c == '.') continue;
+						int col = color(c);
+						r += (col >> 16) & 255; gg += (col >> 8) & 255; bb += col & 255; n++;
+					}
+				if (n * 2 < tot || n == 0) continue;
+				int col = 0xFF000000 | ((r / n) << 16) | ((gg / n) << 8) | (bb / n);
+				g.fill(x + 1 + i, y + 1 + j, x + 2 + i, y + 2 + j, col);
 			}
 		}
 	}
