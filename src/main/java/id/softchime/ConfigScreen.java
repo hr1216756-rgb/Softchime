@@ -56,14 +56,18 @@ public class ConfigScreen extends Screen {
 	private static final int[] ACCENT = {0xFFFFD866, 0xFF6BD6FF, 0xFFE8903A, 0xFF6BF5D0, 0xFF7DFF8A, 0xFFFF5FA2, 0xFFB48CFF, 0xFF5CE1E6, 0xFFF2D27A, 0xFFD9A066, 0xFFB8F5FF, 0xFFE6E6F0,
 		0xFFFFB84D, 0xFFFF8FB1, 0xFF8FF0D8, 0xFF7FB5FF, 0xFFC98A52, 0xFFC7B2FF};
 	private static final int NS = SoundStyle.values().length;
-	private static final String[] TAB_NAMES = {"Sound", "Effects", "Theme", "About"};
-	private static final String[] TAB_SUB = {"Sounds for clicks, menus and sliders", "Switch each effect on or off", "Pick the colours of this menu", "About this mod"};
-	private static final SoundStyle[] TAB_ICON = {SoundStyle.MUSIC_BOX, SoundStyle.STAR_SHIMMER, SoundStyle.WATER_DROP, SoundStyle.SOFT_CHIME};
+	private static final String[] TAB_NAMES = {"General", "Sounds", "Visuals", "UI Settings", "About"};
+	private static final String[] TAB_SUB = {"Sound style and master volume", "Click, menu and slider sounds", "Cursor, particles and animations", "Theme and menu options", "About this mod"};
+	private static final SoundStyle[] TAB_ICON = {SoundStyle.SOFT_CHIME, SoundStyle.MUSIC_BOX, SoundStyle.STAR_SHIMMER, SoundStyle.WATER_DROP, SoundStyle.HARP};
+	private static final int TAB_ID = 400;
+	private static final String[] PREVIEW_NAMES = {"Click", "Open", "Close", "Hover", "Slider tick", "Slide"};
+	private int previewIdx = 0;
 
 	private record Hit(int x, int y, int w, int h, int id) {
 		boolean in(double mx, double my) { return mx >= x && mx < x + w && my >= y && my < y + h; }
 	}
-	private record Toggle(String label, String desc, Supplier<Boolean> get, Consumer<Boolean> set) {}
+	/** group: 0 = Sounds page, 1 = Visuals page, 2 = UI Settings page */
+	private record Toggle(int group, String label, String desc, Supplier<Boolean> get, Consumer<Boolean> set) {}
 	/** kind: 0 header, 1 style chips, 2 volume slider, 3 preview buttons, 4 toggle, 5 theme chips, 6 text line */
 	private record Item(int kind, int a, String s1, String s2, int h) {}
 
@@ -109,14 +113,14 @@ public class ConfigScreen extends Screen {
 	protected void init() {
 		Config c = Config.INSTANCE;
 		toggles.clear();
-		toggles.add(new Toggle("Click sound", "Sound on every click", () -> c.clickSound, v -> c.clickSound = v));
-		toggles.add(new Toggle("Open / close sound", "When a screen opens or closes", () -> c.openCloseSound, v -> c.openCloseSound = v));
-		toggles.add(new Toggle("Hover sound", "Soft tick over buttons", () -> c.hoverSound, v -> c.hoverSound = v));
-		toggles.add(new Toggle("Cursor ring", "Ring and sparkle trail on the pointer", () -> c.cursorRing, v -> c.cursorRing = v));
-		toggles.add(new Toggle("Click effect", "Ripple and sparkles when you click", () -> c.clickParticles, v -> c.clickParticles = v));
-		toggles.add(new Toggle("Animations", "Light sweep, shine and glow", () -> c.animations, v -> c.animations = v));
-		if (UiFx.REANIMATED) toggles.add(new Toggle("ReAnimated compat", "Do not double ReAnimated effects", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v));
-		toggles.add(new Toggle("Options button", "Soft Chime button in Options", () -> c.optionsButton, v -> c.optionsButton = v));
+		toggles.add(new Toggle(0, "Click sound", "Sound on every click", () -> c.clickSound, v -> c.clickSound = v));
+		toggles.add(new Toggle(0, "Open / close sound", "When a screen opens or closes", () -> c.openCloseSound, v -> c.openCloseSound = v));
+		toggles.add(new Toggle(0, "Hover sound", "Soft tick over buttons", () -> c.hoverSound, v -> c.hoverSound = v));
+		toggles.add(new Toggle(1, "Cursor ring", "Ring and sparkle trail on the pointer", () -> c.cursorRing, v -> c.cursorRing = v));
+		toggles.add(new Toggle(1, "Click effect", "Ripple and sparkles when you click", () -> c.clickParticles, v -> c.clickParticles = v));
+		toggles.add(new Toggle(1, "Animations", "Light sweep, shine and glow", () -> c.animations, v -> c.animations = v));
+		if (UiFx.REANIMATED) toggles.add(new Toggle(1, "ReAnimated compat", "Do not double ReAnimated effects", () -> c.reanimatedCompat, v -> c.reanimatedCompat = v));
+		toggles.add(new Toggle(2, "Options button", "Soft Chime button in Options", () -> c.optionsButton, v -> c.optionsButton = v));
 		for (int i = 0; i < toggles.size(); i++) swT[i] = toggles.get(i).get().get() ? 1f : 0f;
 	}
 
