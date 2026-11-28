@@ -364,13 +364,12 @@ public class ConfigScreen extends Screen {
 
 	private void textC(GuiGraphicsExtractor g, String s, int cx, int y, int color) {
 		Font f = getFont();
-		if (flat) { Component b = bold(s); g.text(f, b, cx - f.width(b) / 2, y, color); return; }
-		tx(g, f, s, cx - f.width(s) / 2, y, color);
+		tx(g, f, s, cx - tw(f, s) / 2, y, color);
 	}
 
 	/** Text helper: in the Action skin the font is drawn without the dark drop shadow (it smeared dark text). */
 	private static void tx(GuiGraphicsExtractor g, Font f, String s, int x, int y, int c) {
-		if (flat) g.text(f, Component.literal(s).withStyle(st -> st.withShadowColor(0)), x, y, c);
+		if (flat) PixelFont.draw(g, s, x, y, c);
 		else g.text(f, s, x, y, c);
 	}
 
@@ -403,8 +402,10 @@ public class ConfigScreen extends Screen {
 
 	private float hv(int id) { return hov.getOrDefault(id, 0f); }
 
+	private static int tw(Font f, String s) { return flat ? PixelFont.width(s) : f.width(s); }
+
 	private static String fit(Font f, String s, int w) {
-		while (s.length() > 1 && f.width(s) > w) s = s.substring(0, s.length() - 1);
+		while (s.length() > 1 && tw(f, s) > w) s = s.substring(0, s.length() - 1);
 		return s;
 	}
 
@@ -478,10 +479,12 @@ public class ConfigScreen extends Screen {
 		rr(g, px, py, pw, ph, 5, CARD);
 		if (flat) g.fill(px + 1, py + 1, px + pw - 1, py + 17, HDR); else g.fillGradient(px + 1, py + 3, px + pw - 1, py + 16, HDR, CARD);
 		g.fill(px + 4, py + 1, px + pw - 4, py + 3, HDR);
-		Component title = bold("SOFT CHIME UI");
-		int tw0 = font.width(title);
-		g.text(font, title, px + (pw - tw0) / 2 + 1, py + 5, flat ? 0 : TSH);
-		g.text(font, title, px + (pw - tw0) / 2, py + 4, TC);
+		String title = "SOFT CHIME UI";
+		int tw0 = flat ? PixelFont.width(title) : font.width(bold(title));
+		if (!flat) {
+			g.text(font, bold(title), px + (pw - tw0) / 2 + 1, py + 5, TSH);
+			g.text(font, bold(title), px + (pw - tw0) / 2, py + 4, TC);
+		} else PixelFont.draw(g, title, px + (pw - tw0) / 2, py + 4, TC);
 		Hit cl = add(px + pw - 16, py + 2, 13, 13, 51);
 		add(px + 40, py + 1, pw - 80, 16, 90);
 		rr(g, cl.x, cl.y, 13, 13, 4, lerp(CARD3, PINK, hv(51)));
@@ -496,7 +499,7 @@ public class ConfigScreen extends Screen {
 		rr(g, sbx, bodyY, sw0, bodyH, 4, DEEP);
 
 		if (System.nanoTime() < toastUntil) {
-			int tw5 = font.width(toast);
+			int tw5 = tw(font, toast);
 			rr(g, (this.width - tw5) / 2 - 6, py + ph + 4, tw5 + 12, 14, 3, HDR);
 			tx(g, font, toast, (this.width - tw5) / 2, py + ph + 7, TC);
 		}
@@ -504,8 +507,8 @@ public class ConfigScreen extends Screen {
 		// ---- sidebar
 		int y = bodyY + 4;
 		if (flat) { // Action skin: the banner image supplied by the user
-			int bw = sw0 - 8, bh = bw * 157 / 276;
-			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 414, 235, 414, 235);
+			int bw = sw0 - 8, bh = bw * 536 / 960;
+			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 960, 536, 960, 536);
 			if (c.animations) { // shine sweeps across the banner every few seconds
 				float sp = (t % 4f) / 0.8f;
 				if (sp < 1f) {
@@ -540,8 +543,9 @@ public class ConfigScreen extends Screen {
 				g.fill(th.x, Math.round(selY) + 3, th.x + 2, Math.round(selY) + th.h - 3, YEL);
 			}
 			else if (hv(60 + i) > 0.02f) rr(g, th.x, th.y, th.w, th.h, 3, lerp(DEEP, SIDESEL, hv(60 + i)));
-			icon(g, TAB_ICON[i], th.x + 5, th.y + 1, ACCENT[TAB_ICON[i].ordinal()]);
-			tx(g, font, TAB_NAMES[i], th.x + 25, th.y + 5, sel ? WHITE : MUTED);
+			int slide = flat && c.animations ? Math.round(2 * hv(60 + i)) : 0;
+			icon(g, TAB_ICON[i], th.x + 5 + slide, th.y + 1, ACCENT[TAB_ICON[i].ordinal()]);
+			tx(g, font, TAB_NAMES[i], th.x + 25 + slide, th.y + 5, sel ? WHITE : lerp(MUTED, WHITE, hv(60 + i)));
 			y += 19;
 		}
 
@@ -555,9 +559,11 @@ public class ConfigScreen extends Screen {
 		int cx = px + sw0 + 10, cw = px + pw - 5 - cx;
 		float tin = ease((now - tabStartNs) / 1e9f / 0.22f);
 		int hdrDx = c.animations ? (int) ((1 - tin) * 10) : 0;
-		Component ct = bold(TAB_NAMES[tab].toUpperCase());
-		g.text(font, ct, cx + hdrDx + 1, bodyY + 4, flat ? 0 : TSH);
-		g.text(font, ct, cx + hdrDx, bodyY + 3, HC);
+		String ct = TAB_NAMES[tab].toUpperCase();
+		if (!flat) {
+			g.text(font, bold(ct), cx + hdrDx + 1, bodyY + 4, TSH);
+			g.text(font, bold(ct), cx + hdrDx, bodyY + 3, HC);
+		} else PixelFont.draw(g, ct, cx + hdrDx, bodyY + 3, HC);
 		tx(g, font, fit(font, TAB_SUB[tab], cw - 80), cx + hdrDx, bodyY + 14, MUTED);
 		// reset + scroll arrows
 		Hit rs = add(cx + cw - 32, bodyY + 2, 32, 12, 82);
@@ -696,7 +702,7 @@ public class ConfigScreen extends Screen {
 				rr(g, kx - 6, sy - 3, 12, 12, 6, PINK);
 				rr(g, kx - 5, sy - 2, 10, 10, 5, WHITE);
 				String pct = Math.round(c.volume * 100) + "%";
-				tx(g, font, pct, x + w - font.width(pct), y + 7, YEL);
+				tx(g, font, pct, x + w - tw(font, pct), y + 7, YEL);
 			}
 			case 3 -> {
 				String[] names = {"Click", "Open", "Close", "Hover"};
@@ -704,7 +710,7 @@ public class ConfigScreen extends Screen {
 				for (int i = 0; i < 4; i++) {
 					Hit ch = add(x + i * (chw + 3), y, chw, 16, 30 + i);
 					btn(g, ch.x, ch.y, ch.w, ch.h, 4, lerp(CARD2, CARD3, hv(30 + i)));
-					int tw3 = font.width(names[i]);
+					int tw3 = tw(font, names[i]);
 					int startX = ch.x + (ch.w - (tw3 + 10)) / 2;
 					int[] tri = {1, 2, 3, 2, 1};
 					for (int r = 0; r < 5; r++) g.fill(startX, ch.y + 5 + r, startX + tri[r], ch.y + 6 + r, MINT);
@@ -734,6 +740,7 @@ public class ConfigScreen extends Screen {
 				if (flat) {
 					g.fill(x, y + it.h - 1, x + w, y + it.h, 0xFF1F1F1F);
 					if (hvr > 0.02f) g.fill(x, y, x + w, y + it.h - 1, ((int) (24 * hvr) << 24) | 0xFFFFFF);
+					if (hvr > 0.02f) g.fill(x, y + 2, x + Math.round(3 * hvr), y + it.h - 3, YEL);
 				} else rr(g, x, y, w, it.h - 2, 4, lerp(CARD2, CARD3, hvr));
 				int ai = (it.a * 3 + 1) % NS;
 				icon(g, SoundStyle.values()[ai], x + 4, y + (it.h - 2 - 16) / 2, ACCENT[ai]);
@@ -743,14 +750,14 @@ public class ConfigScreen extends Screen {
 				{
 				// Action skin: yellow "I" side when on, knob slides smoothly
 				g.fill(sx0 - 1, sy0 - 1, sx0 + swW + 1, sy0 + swH + 1, 0xFF111111);
-				g.fill(sx0, sy0, sx0 + swW, sy0 + swH, 0xFF2E2E2E);
+				g.fill(sx0, sy0, sx0 + swW, sy0 + swH, 0xFF252525);
 				int half = swW / 2, kx = sx0 + Math.round(sw1 * half);
 				if (sw1 > 0.02f) {
 					g.fill(sx0, sy0, kx + 1, sy0 + swH, 0xFF000000 | (YEL & 0xFFFFFF));
 					g.fill(sx0, sy0 + swH - 1, kx + 1, sy0 + swH, lerp(YEL, 0xFF000000, 0.3f));
 				}
-				if (sw1 > 0.5f) g.fill(sx0 + half / 2 - 1, sy0 + 4, sx0 + half / 2, sy0 + swH - 4, 0xFF3A2A00);
-				else { int ox = sx0 + half + half / 2 - 2; g.outline(ox, sy0 + 4, 4, swH - 8, 0xFFCCCCCC); }
+				if (sw1 > 0.5f) g.fill(sx0 + half / 2 - 1, sy0 + 3, sx0 + half / 2 + 1, sy0 + swH - 3, 0xFFFFE9A8);
+				else { int ox = sx0 + half + half / 2 - 2; g.outline(ox, sy0 + 3, 4, swH - 6, 0xFF9A9A9A); }
 				btn(g, kx, sy0, half, swH, 2, lerp(0xFFCFCFCF, 0xFFFFFFFF, hvr * 0.6f));
 				}
 			}
@@ -779,11 +786,11 @@ public class ConfigScreen extends Screen {
 				if (focused) g.outline(fb.x - 1, fb.y - 1, fb.w + 2, fb.h + 2, YEL);
 				String shown = field.toString();
 				int maxW = fb.w - 10;
-				while (shown.length() > 1 && font.width(shown) > maxW) shown = shown.substring(1);
+				while (shown.length() > 1 && tw(font, shown) > maxW) shown = shown.substring(1);
 				if (shown.isEmpty() && !focused) tx(g, font, "Tap here to type...", fb.x + 5, fb.y + 6, MUTED);
 				else {
 					tx(g, font, shown, fb.x + 5, fb.y + 6, WHITE);
-					if (focused && ((int) (t * 2) % 2 == 0)) g.fill(fb.x + 5 + font.width(shown), fb.y + 4, fb.x + 6 + font.width(shown), fb.y + 15, YEL);
+					if (focused && ((int) (t * 2) % 2 == 0)) g.fill(fb.x + 5 + tw(font, shown), fb.y + 4, fb.x + 6 + tw(font, shown), fb.y + 15, YEL);
 				}
 				Hit en = add(x + w - enW, y, enW, 20, 92);
 				rr(g, en.x, en.y + 1, en.w, en.h, 4, 0xFFB5902A);

@@ -24,24 +24,30 @@ public final class Icons {
 		return 0xFF000000 | (r << 16) | (g << 8) | bl;
 	}
 
-	/** Dark bevelled tile with a coloured border and the coloured glyph inside (Action skin icons). */
-	public static void styleTile(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int tileRgb) {
-		int base = 0xFF000000 | (tileRgb & 0xFFFFFF);
-		g.fill(x - 1, y - 1, x + 17, y + 17, mix(base, 0xFF000000, 0.35f));
-		g.fill(x, y, x + 16, y + 16, mix(base, 0xFF000000, 0.72f));
-		g.fill(x, y, x + 16, y + 1, mix(base, 0xFFFFFFFF, 0.25f));
-		g.fill(x, y, x + 1, y + 16, mix(base, 0xFFFFFFFF, 0.1f));
-		g.fill(x, y + 15, x + 16, y + 16, base);
-		g.fill(x + 15, y, x + 16, y + 16, base);
-		String[] rows = ART[st.ordinal()];
-		for (int j = 0; j < rows.length; j++) {
-			String row = rows[j];
-			for (int i = 0; i < row.length(); i++) {
-				char c = row.charAt(i);
-				if (c == '.') continue;
-				g.fill(x + i, y + j, x + i + 1, y + j + 1, color(c));
-			}
-		}
+	private static final int[] TILE = {0xFF6A3FE0, 0xFF35B558, 0xFFE8478F, 0xFF22BFC9};
+
+	/** Action-skin icon: bevelled coloured tile with a yellow sparkle (like the reference menu). */
+	public static void styleTile(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int unused) {
+		int base = TILE[st.ordinal() % 4];
+		g.fill(x - 1, y - 1, x + 17, y + 17, 0xFF1A1030);
+		g.fill(x, y, x + 16, y + 16, base);
+		g.fill(x, y, x + 16, y + 1, mix(base, 0xFFFFFFFF, 0.55f));
+		g.fill(x, y, x + 1, y + 16, mix(base, 0xFFFFFFFF, 0.35f));
+		g.fill(x, y + 15, x + 16, y + 16, mix(base, 0xFF000000, 0.4f));
+		g.fill(x + 15, y, x + 16, y + 16, mix(base, 0xFF000000, 0.4f));
+		sparkle(g, x + 1, y + 1, 0xFF7A4A00);
+		sparkle(g, x, y, 0xFFFFD83A);
+		g.fill(x + 7, y + 4, x + 8, y + 7, 0xFFFFF4B0);
+	}
+
+	private static void sparkle(GuiGraphicsExtractor g, int x, int y, int col) {
+		g.fill(x + 7, y + 3, x + 9, y + 13, col);
+		g.fill(x + 3, y + 7, x + 13, y + 9, col);
+		g.fill(x + 6, y + 6, x + 10, y + 10, col);
+		g.fill(x + 5, y + 5, x + 6, y + 6, col);
+		g.fill(x + 10, y + 5, x + 11, y + 6, col);
+		g.fill(x + 5, y + 10, x + 6, y + 11, col);
+		g.fill(x + 10, y + 10, x + 11, y + 11, col);
 	}
 
 	/** 32x32 mod logo. */
