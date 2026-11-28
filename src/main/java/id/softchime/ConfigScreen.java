@@ -70,7 +70,11 @@ public class ConfigScreen extends Screen {
 	private static final Identifier BANNER = Identifier.fromNamespaceAndPath("softchime", "textures/gui/banner.png");
 	private final Screen parent;
 	private int tab = 0;
-	private final int[] scroll = new int[4];
+	private float scrollPx = 0, scrollTarget = 0;
+	private boolean dragScroll = false;
+	private int sbTop, sbH, sbThumb, sbMax;
+	private double lastMy = -1;
+	private long lastMoveYNs = 0;
 	private final List<Hit> hits = new ArrayList<>();
 	private final List<Toggle> toggles = new ArrayList<>();
 	private final Map<Integer, Float> hov = new HashMap<>();
@@ -125,7 +129,7 @@ public class ConfigScreen extends Screen {
 			l.add(new Item(0, SoundStyle.SOFT_CHIME.ordinal(), "Sound Style", "Pick the sound family", 22));
 			for (int r = 0; r < (NS + 3) / 4; r++) l.add(new Item(1, r, "", "", 22));
 		} else if (tab == 1) {
-			for (int i = 0; i < toggles.size(); i++) l.add(new Item(4, i, "", "", flat ? 40 : 26));
+			for (int i = 0; i < toggles.size(); i++) l.add(new Item(4, i, "", "", 26));
 		} else if (tab == 2) {
 			l.add(new Item(0, SoundStyle.WATER_DROP.ordinal(), "Colour Theme", "Changes the whole menu", 22));
 			for (int r = 0; r < 2; r++) l.add(new Item(5, r, "", "", 24));
@@ -167,12 +171,11 @@ public class ConfigScreen extends Screen {
 		lastActionNs = now; lastActionId = id;
 		pressId = id; pressNs = now;
 		Config c = Config.INSTANCE;
+		if (id != 85) dragScroll = false;
 		if (id != 20 && dragging) { dragging = false; lastTickStep = -1; Config.save(); }
-		if (id >= 60 && id < 64) { if (tab != id - 60) { tab = id - 60; tabStartNs = now; } click(); }
+		if (id >= 60 && id < 64) { if (tab != id - 60) { tab = id - 60; tabStartNs = now; scrollPx = 0; scrollTarget = 0; } click(); }
 		else if (id == 80 || id == 81) {
-			int n = items().size();
-			scroll[tab] = Math.max(0, Math.min(n - 1, scroll[tab] + (id == 81 ? 1 : -1)));
-			tabStartNs = now;
+			scrollTarget += (id == 81 ? 1 : -1) * Math.max(30, sbH * 0.6f);
 			click();
 		}
 		else if (id == 82) {
@@ -199,8 +202,9 @@ public class ConfigScreen extends Screen {
 		}
 		else if (id >= 200 && id < 200 + toggles.size() * 2) {
 			Toggle t = toggles.get((id - 200) / 2);
-			t.set.accept((id - 200) % 2 == 0); Config.save(); click();
+			t.set.accept(!t.get.get()); Config.save(); click();
 		}
+		else if (id == 85) { dragScroll = true; lastMoveYNs = now; lastMy = my; scrollFromY(my); }
 		else if (id == 91) { focused = true; click(); }
 		else if (id == 93) { // back to the normal look
 			c.skin = false; Config.save(); applyTheme(c.theme); click();
@@ -223,6 +227,18 @@ public class ConfigScreen extends Screen {
 	private static boolean anyPressed() {
 		var mh = Minecraft.getInstance().mouseHandler; // launchers may report a tap as the right/other button
 		return mh.isLeftPressed() || mh.isRightPressed() || mh.isMiddlePressed();
+	}
+
+	private void scrollFromY(double my) {
+		if (sbMax <= 0) return;
+		float r = (float) Math.max(0, Math.min(1, (my - sbTop - sbThumb / 2.0) / Math.max(1, sbH - sbThumb)));
+		scrollTarget = scrollPx = r * sbMax;
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+		scrollTarget -= (float) scrollY * 26f;
+		return true;
 	}
 
 	private void setVolumeFrom(double mx) {
@@ -348,6 +364,7 @@ public class ConfigScreen extends Screen {
 
 	private void textC(GuiGraphicsExtractor g, String s, int cx, int y, int color) {
 		Font f = getFont();
+		if (flat) { Component b = bold(s); g.text(f, b, cx - f.width(b) / 2, y, color); return; }
 		tx(g, f, s, cx - f.width(s) / 2, y, color);
 	}
 
@@ -547,25 +564,53 @@ public class ConfigScreen extends Screen {
 		btn(g, rs.x, rs.y, rs.w, rs.h, 3, lerp(CARD2, flat ? YEL : PINK, hv(82)));
 		textC(g, "Reset", rs.x + rs.w / 2, rs.y + 2, TXT);
 
-		// ---- item list (discrete scrolling: only whole items that fit are drawn)
+		// ---- item list (smooth pixel scrolling, clipped to the panel)
 		List<Item> items = items();
-		scroll[tab] = Math.max(0, Math.min(items.size() - 1, scroll[tab]));
-		int viewTop = bodyY + 27, viewBottom = bodyY + bodyH - 3;
-		int yy = viewTop, idx = scroll[tab];
-		int first = idx;
-		while (idx < items.size()) {
-			Item it = items.get(idx);
-			if (yy + it.h > viewBottom) break;
-			float ent = c.animations ? ease((now - tabStartNs) / 1e9f / 0.25f - (idx - first) * 0.12f) : 1f;
-			int iy = yy + (int) ((1 - ent) * 8);
-			drawItem(g, font, it, cx, iy, cw, t);
+		int viewTop = bodyY + 27, viewBottom = bodyY + bodyH - 3, viewH = viewBottom - viewTop;
+		int total = 0;
+		for (Item it0 : items) total += it0.h + 2;
+		int maxScroll = Math.max(0, total - viewH);
+		scrollTarget = Math.max(0, Math.min(maxScroll, scrollTarget));
+		if (dragScroll) {
+			if (my != lastMy) { lastMy = my; lastMoveYNs = now; }
+			if (anyPressed() || now - lastMoveYNs < 600_000_000L) scrollFromY(my); else dragScroll = false;
+		}
+		scrollPx += (scrollTarget - scrollPx) * Math.min(1f, dt * 14f);
+		if (Math.abs(scrollTarget - scrollPx) < 0.3f) scrollPx = scrollTarget;
+		sbTop = viewTop; sbH = viewH; sbMax = maxScroll;
+		int listW = cw - (maxScroll > 0 ? 9 : 0);
+		g.enableScissor(cx - 2, viewTop, cx + cw + 2, viewBottom);
+		int yy = viewTop - Math.round(scrollPx), idx = 0;
+		for (Item it : items) {
+			if (yy + it.h >= viewTop && yy <= viewBottom) {
+				float ent = c.animations ? ease((now - tabStartNs) / 1e9f / 0.25f - idx * 0.1f) : 1f;
+				int iy = yy + (int) ((1 - ent) * 8);
+				int before = hits.size();
+				drawItem(g, font, it, cx, iy, listW, t);
+				for (int q = hits.size() - 1; q >= before; q--) { // keep only the visible part clickable
+					Hit h0 = hits.get(q);
+					int top = Math.max(h0.y, viewTop), bot = Math.min(h0.y + h0.h, viewBottom);
+					if (bot <= top) hits.remove(q); else hits.set(q, new Hit(h0.x, top, h0.w, bot - top, h0.id));
+				}
+			}
 			yy += it.h + 2;
 			idx++;
+		}
+		g.disableScissor();
+		if (maxScroll > 0) { // scrollbar
+			sbThumb = Math.max(16, viewH * viewH / total);
+			int ty = viewTop + Math.round((viewH - sbThumb) * (scrollPx / maxScroll));
+			int bx = cx + cw - 5;
+			g.fill(bx, viewTop, bx + 5, viewBottom, flat ? 0xFF262626 : DEEP);
+			Hit sbh = add(cx + cw - 12, viewTop, 12, viewH, 85);
+			int tc = flat ? lerp(0xFFA8A8A8, 0xFFFFFFFF, hv(85)) : lerp(MUTED, WHITE, hv(85));
+			g.fill(bx, ty, bx + 5, ty + sbThumb, tc);
+			g.fill(bx, ty, bx + 5, ty + 1, lerp(tc, 0xFFFFFFFF, 0.5f));
 		}
 		if (c.animations) {
 			for (Hit ht : hits) {
 				float hvv = hv(ht.id);
-				if (ht.id >= 60 && ht.id < 64) continue;
+				if ((ht.id >= 60 && ht.id < 64) || (ht.id >= 200 && ht.id < 300) || ht.id == 85) continue;
 				if (hvv > 0.03f && ht.h >= 12 && ht.h <= 24 && ht.w >= 20) { // underline grows from the centre
 					int lw = (int) (ht.w * hvv);
 					g.fill(ht.x + (ht.w - lw) / 2, ht.y + ht.h - 1, ht.x + (ht.w + lw) / 2, ht.y + ht.h, 0xFF000000 | (YEL & 0xFFFFFF));
@@ -577,7 +622,7 @@ public class ConfigScreen extends Screen {
 				if (ph2 != null && pp >= 0 && pp < 1) g.fill(ph2.x, ph2.y, ph2.x + ph2.w, ph2.y + ph2.h, ((int) (110 * (1 - pp)) << 24) | 0xFFFFFF);
 			}
 		}
-		boolean canUp = scroll[tab] > 0, canDown = idx < items.size();
+		boolean canUp = scrollTarget > 0.5f, canDown = scrollTarget < maxScroll - 0.5f;
 		for (int i = 0; i < 2; i++) {
 			boolean up = i == 0, en = up ? canUp : canDown;
 			int ax = cx + cw - 32 - 4 - (up ? 28 : 14);
@@ -589,10 +634,6 @@ public class ConfigScreen extends Screen {
 				int dy = up ? -1 + r : 1 - r;
 				g.fill(mxA - r, myA + dy, mxA + r + 1, myA + dy + 1, col);
 			}
-		}
-		if (canUp || canDown) {
-			// little scroll-position dots under the arrows
-			textC(g, (scroll[tab] + 1) + "/" + items.size(), cx + cw - 32 - 4 - 14 - 7, bodyY + 15, MUTED);
 		}
 	}
 
@@ -672,32 +713,29 @@ public class ConfigScreen extends Screen {
 			}
 			case 4 -> {
 				Toggle tg = toggles.get(it.a);
-				float s = swT[it.a];
+				float sw1 = swT[it.a];
+				Hit row = add(x, y, w, it.h - 2, 200 + it.a * 2);
+				float hvr = hv(row.id);
 				if (flat) {
-					icon(g, SoundStyle.values()[(it.a * 3 + 1) % NS], x + 2, y + 2, ACCENT[(it.a * 3 + 1) % NS]);
 					g.fill(x, y + it.h - 1, x + w, y + it.h, 0xFF1F1F1F);
-					tx(g, font, tg.label, x + 22, y + 2, WHITE);
-					tx(g, font, fit(font, tg.desc, w - 24), x + 22, y + 12, MUTED);
-					int half = w / 2;
-					Hit on = add(x, y + 23, half - 1, 14, 200 + it.a * 2);
-					Hit off = add(x + half + 1, y + 23, w - half - 1, 14, 201 + it.a * 2);
-					btn(g, on.x, on.y, on.w, 14, 0, lerp(CARD2, YEL, s));
-					btn(g, off.x, off.y, off.w, 14, 0, lerp(CARD2, YEL, 1 - s));
-					textC(g, "On", on.x + on.w / 2, on.y + 3, TXT);
-					textC(g, "Off", off.x + off.w / 2, off.y + 3, TXT);
-					break;
+					if (hvr > 0.02f) g.fill(x, y, x + w, y + it.h - 1, ((int) (24 * hvr) << 24) | 0xFFFFFF);
+				} else rr(g, x, y, w, it.h - 2, 4, lerp(CARD2, CARD3, hvr));
+				int ai = (it.a * 3 + 1) % NS;
+				icon(g, SoundStyle.values()[ai], x + 4, y + (it.h - 2 - 16) / 2, ACCENT[ai]);
+				int swW = 38, swH = 14, sx0 = x + w - swW - 6, sy0 = y + (it.h - 2 - swH) / 2;
+				tx(g, font, fit(font, tg.label, sx0 - x - 30), x + 26, y + 3, flat ? WHITE : TXT);
+				tx(g, font, fit(font, tg.desc, sx0 - x - 30), x + 26, y + 13, flat ? MUTED : MUTED2);
+				// switch: orange "I" side when on, knob slides smoothly
+				g.fill(sx0 - 1, sy0 - 1, sx0 + swW + 1, sy0 + swH + 1, 0xFF111111);
+				g.fill(sx0, sy0, sx0 + swW, sy0 + swH, 0xFF2E2E2E);
+				int half = swW / 2, kx = sx0 + Math.round(sw1 * half);
+				if (sw1 > 0.02f) {
+					g.fill(sx0, sy0, kx + 1, sy0 + swH, 0xFF000000 | (YEL & 0xFFFFFF));
+					g.fill(sx0, sy0 + swH - 1, kx + 1, sy0 + swH, lerp(YEL, 0xFF000000, 0.3f));
 				}
-				rr(g, x, y, w, it.h - 2, 4, CARD2);
-				rr(g, x + 5, y + 8, 8, 8, 2, lerp(OFF, MINT, s));
-				int bw = 26, onX = x + w - 2 * bw - 6, offX = onX + bw + 2;
-				tx(g, font, fit(font, tg.label, onX - x - 22), x + 18, y + 4, TXT);
-				tx(g, font, fit(font, tg.desc, onX - x - 22), x + 18, y + 14, MUTED2);
-				Hit on = add(onX, y + 5, bw, 14, 200 + it.a * 2);
-				Hit off = add(offX, y + 5, bw, 14, 201 + it.a * 2);
-				rr(g, on.x, on.y, bw, 14, 3, lerp(lerp(CARD3, CARD2, 0.3f), YEL, s));
-				rr(g, off.x, off.y, bw, 14, 3, lerp(lerp(CARD3, CARD2, 0.3f), YEL, 1 - s));
-				textC(g, "On", on.x + bw / 2, on.y + 3, s > 0.5f ? DARK : MUTED2);
-				textC(g, "Off", off.x + bw / 2, off.y + 3, s <= 0.5f ? DARK : MUTED2);
+				if (sw1 > 0.5f) g.fill(sx0 + half / 2 - 1, sy0 + 4, sx0 + half / 2, sy0 + swH - 4, 0xFF3A2A00);
+				else { int ox = sx0 + half + half / 2 - 2; g.outline(ox, sy0 + 4, 4, swH - 8, 0xFFCCCCCC); }
+				btn(g, kx, sy0, half, swH, 2, lerp(0xFFCFCFCF, 0xFFFFFFFF, hvr * 0.6f));
 			}
 			case 5 -> {
 				int tw3 = (w - 6) / 3;
