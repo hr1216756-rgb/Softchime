@@ -26,28 +26,25 @@ public final class Icons {
 
 	private static final int[] TILE = {0xFF6A3FE0, 0xFF35B558, 0xFFE8478F, 0xFF22BFC9};
 
-	/** Action-skin icon: bevelled coloured tile with a yellow sparkle (like the reference menu). */
-	public static void styleTile(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int unused) {
+	/** Action-skin icon: bevelled coloured tile (like the reference menu) holding the style's own glyph. */
+	public static void styleTile(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int size) {
 		int base = TILE[st.ordinal() % 4];
-		g.fill(x - 1, y - 1, x + 17, y + 17, 0xFF1A1030);
-		g.fill(x, y, x + 16, y + 16, base);
-		g.fill(x, y, x + 16, y + 1, mix(base, 0xFFFFFFFF, 0.55f));
-		g.fill(x, y, x + 1, y + 16, mix(base, 0xFFFFFFFF, 0.35f));
-		g.fill(x, y + 15, x + 16, y + 16, mix(base, 0xFF000000, 0.4f));
-		g.fill(x + 15, y, x + 16, y + 16, mix(base, 0xFF000000, 0.4f));
-		sparkle(g, x + 1, y + 1, 0xFF7A4A00);
-		sparkle(g, x, y, 0xFFFFD83A);
-		g.fill(x + 7, y + 4, x + 8, y + 7, 0xFFFFF4B0);
-	}
-
-	private static void sparkle(GuiGraphicsExtractor g, int x, int y, int col) {
-		g.fill(x + 7, y + 3, x + 9, y + 13, col);
-		g.fill(x + 3, y + 7, x + 13, y + 9, col);
-		g.fill(x + 6, y + 6, x + 10, y + 10, col);
-		g.fill(x + 5, y + 5, x + 6, y + 6, col);
-		g.fill(x + 10, y + 5, x + 11, y + 6, col);
-		g.fill(x + 5, y + 10, x + 6, y + 11, col);
-		g.fill(x + 10, y + 10, x + 11, y + 11, col);
+		g.fill(x - 1, y - 1, x + size + 1, y + size + 1, 0xFF1A1030);
+		g.fill(x, y, x + size, y + size, base);
+		g.fill(x, y, x + size, y + 1, mix(base, 0xFFFFFFFF, 0.55f));
+		g.fill(x, y, x + 1, y + size, mix(base, 0xFFFFFFFF, 0.35f));
+		g.fill(x, y + size - 1, x + size, y + size, mix(base, 0xFF000000, 0.4f));
+		g.fill(x + size - 1, y, x + size, y + size, mix(base, 0xFF000000, 0.4f));
+		String[] rows = ART[st.ordinal()];
+		int in = size - 2; // glyph area, sampled down from 16x16
+		for (int j = 0; j < in; j++) {
+			String row = rows[j * 16 / in];
+			for (int i = 0; i < in; i++) {
+				char c = row.charAt(i * 16 / in);
+				if (c == '.') continue;
+				g.fill(x + 1 + i, y + 1 + j, x + 2 + i, y + 2 + j, color(c));
+			}
+		}
 	}
 
 	/** 32x32 mod logo. */

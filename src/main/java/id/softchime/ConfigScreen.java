@@ -123,18 +123,18 @@ public class ConfigScreen extends Screen {
 	private List<Item> items() {
 		List<Item> l = new ArrayList<>();
 		if (tab == 0) {
-			l.add(new Item(0, SoundStyle.CRYSTAL_GLASS.ordinal(), "Volume", "Drag, or use + and -", 22));
+			l.add(new Item(0, SoundStyle.CRYSTAL_GLASS.ordinal(), "Volume", "Drag, or use + and -", flat ? 19 : 22));
 			l.add(new Item(2, 0, "", "", 24));
 			l.add(new Item(3, 0, "", "", 20));
-			l.add(new Item(0, SoundStyle.SOFT_CHIME.ordinal(), "Sound Style", "Pick the sound family", 22));
-			for (int r = 0; r < (NS + 3) / 4; r++) l.add(new Item(1, r, "", "", 22));
+			l.add(new Item(0, SoundStyle.SOFT_CHIME.ordinal(), "Sound Style", "Pick the sound family", flat ? 19 : 22));
+			for (int r = 0; r < (NS + 3) / 4; r++) l.add(new Item(1, r, "", "", flat ? 18 : 22));
 		} else if (tab == 1) {
-			for (int i = 0; i < toggles.size(); i++) l.add(new Item(4, i, "", "", 26));
+			for (int i = 0; i < toggles.size(); i++) l.add(new Item(4, i, "", "", flat ? 20 : 26));
 		} else if (tab == 2) {
-			l.add(new Item(0, SoundStyle.WATER_DROP.ordinal(), "Colour Theme", "Changes the whole menu", 22));
+			l.add(new Item(0, SoundStyle.WATER_DROP.ordinal(), "Colour Theme", "Changes the whole menu", flat ? 19 : 22));
 			for (int r = 0; r < 2; r++) l.add(new Item(5, r, "", "", 24));
 		} else {
-			l.add(new Item(0, SoundStyle.STAR_SHIMMER.ordinal(), "Secret Code", "Use the keys below (or your keyboard)", 22));
+			l.add(new Item(0, SoundStyle.STAR_SHIMMER.ordinal(), "Secret Code", "Use the keys below (or your keyboard)", flat ? 19 : 22));
 			l.add(new Item(7, 0, "", "", 24));
 			l.add(new Item(8, 0, "", "", 4 * 16 + 2));
 			l.add(new Item(6, 0, "Soft Chime UI  v" + VERSION, "", 14));
@@ -389,7 +389,7 @@ public class ConfigScreen extends Screen {
 	}
 
 	private static void icon(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int accent) {
-		if (flat) Icons.styleTile(g, st, x, y, accent);
+		if (flat) Icons.styleTile(g, st, x, y, 12);
 		else Icons.style(g, st, x, y, 1, 255);
 	}
 
@@ -494,7 +494,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		int bodyY = py + 18, bodyH = ph - 20;
-		int sw0 = Math.max(74, Math.min(104, pw * 27 / 100));
+		int sw0 = flat ? Math.max(62, Math.min(92, pw * 22 / 100)) : Math.max(74, Math.min(104, pw * 27 / 100));
 		int sbx = px + 4;
 		rr(g, sbx, bodyY, sw0, bodyH, 4, DEEP);
 
@@ -534,7 +534,8 @@ public class ConfigScreen extends Screen {
 		if (c.animations) g.outline(done.x - 1, done.y - 1, done.w + 2, done.h + 2, (((int) (40 + 70 * (0.5 + 0.5 * Math.sin(t * 3)))) << 24) | (YEL & 0xFFFFFF));
 		y += 19;
 		for (int i = 0; i < 4; i++) {
-			Hit th = add(sbx + 2, y, sw0 - 4, 18, 60 + i);
+			int rowH = flat ? 15 : 18;
+			Hit th = add(sbx + 2, y, sw0 - 4, rowH, 60 + i);
 			boolean sel = tab == i;
 			if (sel) {
 				if (selY < 0) selY = th.y;
@@ -544,9 +545,9 @@ public class ConfigScreen extends Screen {
 			}
 			else if (hv(60 + i) > 0.02f) rr(g, th.x, th.y, th.w, th.h, 3, lerp(DEEP, SIDESEL, hv(60 + i)));
 			int slide = flat && c.animations ? Math.round(2 * hv(60 + i)) : 0;
-			icon(g, TAB_ICON[i], th.x + 5 + slide, th.y + 1, ACCENT[TAB_ICON[i].ordinal()]);
-			tx(g, font, TAB_NAMES[i], th.x + 25 + slide, th.y + 5, sel ? WHITE : lerp(MUTED, WHITE, hv(60 + i)));
-			y += 19;
+			icon(g, TAB_ICON[i], th.x + (flat ? 4 : 5) + slide, th.y + 1, ACCENT[TAB_ICON[i].ordinal()]);
+			tx(g, font, TAB_NAMES[i], th.x + (flat ? 20 : 25) + slide, th.y + (flat ? 4 : 5), sel ? WHITE : lerp(MUTED, WHITE, hv(60 + i)));
+			y += flat ? 16 : 19;
 		}
 
 		if (flat) {
@@ -647,6 +648,12 @@ public class ConfigScreen extends Screen {
 		Config c = Config.INSTANCE;
 		switch (it.kind) {
 			case 0 -> {
+				if (flat) {
+					icon(g, SoundStyle.values()[it.a], x, y + 2, ACCENT[it.a]);
+					tx(g, font, it.s1, x + 17, y + 2, WHITE);
+					tx(g, font, fit(font, it.s2, w - 19), x + 17, y + 10, MUTED);
+					break;
+				}
 				icon(g, SoundStyle.values()[it.a], x, y + 3, ACCENT[it.a]);
 				tx(g, font, it.s1, x + 20, y + 3, WHITE);
 				tx(g, font, fit(font, it.s2, w - 22), x + 20, y + 13, MUTED);
@@ -674,8 +681,9 @@ public class ConfigScreen extends Screen {
 					}
 					g.fill(cx + 1, cy + 4, cx + 2, cy + hh.h - 4, ACCENT[i]);
 					int bounce = (int) (Math.sin(pulse[i] * Math.PI) * 3);
-					icon(g, SoundStyle.values()[i], cx + 3, cy + (hh.h - 16) / 2 - bounce, ACCENT[i]);
-					tx(g, font, fit(font, NAMES[i], cw4 - 22), cx + 21, cy + (hh.h - 8) / 2, TXT);
+					int isz = flat ? 12 : 16, tOff = flat ? 18 : 21;
+					icon(g, SoundStyle.values()[i], cx + 3, cy + (hh.h - isz) / 2 - bounce, ACCENT[i]);
+					tx(g, font, fit(font, NAMES[i], cw4 - tOff - 3), cx + tOff, cy + (hh.h - 8) / 2, TXT);
 					if (sel) for (int b = 0; b < 3; b++) {
 						int bh = 1 + (int) (Math.abs(Math.sin(t * 6 + b * 1.7)) * 4);
 						g.fill(cx + cw4 - 7 + b * 2, cy + hh.h - 3 - bh, cx + cw4 - 6 + b * 2, cy + hh.h - 3, ACCENT[i]);
@@ -743,10 +751,10 @@ public class ConfigScreen extends Screen {
 					if (hvr > 0.02f) g.fill(x, y + 2, x + Math.round(3 * hvr), y + it.h - 3, YEL);
 				} else rr(g, x, y, w, it.h - 2, 4, lerp(CARD2, CARD3, hvr));
 				int ai = (it.a * 3 + 1) % NS;
-				icon(g, SoundStyle.values()[ai], x + 4, y + (it.h - 2 - 16) / 2, ACCENT[ai]);
-				int swW = 38, swH = 14, sx0 = x + w - swW - 6, sy0 = y + (it.h - 2 - swH) / 2;
-				tx(g, font, fit(font, tg.label, sx0 - x - 30), x + 26, y + 3, flat ? WHITE : TXT);
-				tx(g, font, fit(font, tg.desc, sx0 - x - 30), x + 26, y + 13, flat ? MUTED : MUTED2);
+				icon(g, SoundStyle.values()[ai], x + 3, y + (it.h - 2 - 12) / 2, ACCENT[ai]);
+				int swW = 34, swH = 12, sx0 = x + w - swW - 6, sy0 = y + (it.h - 2 - swH) / 2;
+				tx(g, font, fit(font, tg.label, sx0 - x - 22), x + 19, y + 2, WHITE);
+				tx(g, font, fit(font, tg.desc, sx0 - x - 22), x + 19, y + 10, MUTED);
 				{
 				// Action skin: yellow "I" side when on, knob slides smoothly
 				g.fill(sx0 - 1, sy0 - 1, sx0 + swW + 1, sy0 + swH + 1, 0xFF111111);
