@@ -202,7 +202,7 @@ public class ConfigScreen extends Screen {
 		}
 		else if (id >= 200 && id < 200 + toggles.size() * 2) {
 			Toggle t = toggles.get((id - 200) / 2);
-			t.set.accept(!t.get.get()); Config.save(); click();
+			t.set.accept(flat ? !t.get.get() : (id - 200) % 2 == 0); Config.save(); click();
 		}
 		else if (id == 85) { dragScroll = true; lastMoveYNs = now; lastMy = my; scrollFromY(my); }
 		else if (id == 91) { focused = true; click(); }
@@ -714,6 +714,21 @@ public class ConfigScreen extends Screen {
 			case 4 -> {
 				Toggle tg = toggles.get(it.a);
 				float sw1 = swT[it.a];
+				if (!flat) { // default UI: classic On/Off buttons
+					float s = sw1;
+					rr(g, x, y, w, it.h - 2, 4, CARD2);
+					rr(g, x + 5, y + 8, 8, 8, 2, lerp(OFF, MINT, s));
+					int bw = 26, onX = x + w - 2 * bw - 6, offX = onX + bw + 2;
+					tx(g, font, fit(font, tg.label, onX - x - 22), x + 18, y + 4, TXT);
+					tx(g, font, fit(font, tg.desc, onX - x - 22), x + 18, y + 14, MUTED2);
+					Hit on = add(onX, y + 5, bw, 14, 200 + it.a * 2);
+					Hit off = add(offX, y + 5, bw, 14, 201 + it.a * 2);
+					rr(g, on.x, on.y, bw, 14, 3, lerp(lerp(CARD3, CARD2, 0.3f), YEL, s));
+					rr(g, off.x, off.y, bw, 14, 3, lerp(lerp(CARD3, CARD2, 0.3f), YEL, 1 - s));
+					textC(g, "On", on.x + bw / 2, on.y + 3, s > 0.5f ? DARK : MUTED2);
+					textC(g, "Off", off.x + bw / 2, off.y + 3, s <= 0.5f ? DARK : MUTED2);
+					break;
+				}
 				Hit row = add(x, y, w, it.h - 2, 200 + it.a * 2);
 				float hvr = hv(row.id);
 				if (flat) {
@@ -725,11 +740,7 @@ public class ConfigScreen extends Screen {
 				int swW = 38, swH = 14, sx0 = x + w - swW - 6, sy0 = y + (it.h - 2 - swH) / 2;
 				tx(g, font, fit(font, tg.label, sx0 - x - 30), x + 26, y + 3, flat ? WHITE : TXT);
 				tx(g, font, fit(font, tg.desc, sx0 - x - 30), x + 26, y + 13, flat ? MUTED : MUTED2);
-				if (!flat) { // other themes: rounded pill in the theme colour
-					rr(g, sx0, sy0, swW, swH, 7, lerp(DEEP, MINT, sw1));
-					int kd = swH - 4, kx2 = sx0 + 2 + Math.round(sw1 * (swW - kd - 4));
-					rr(g, kx2, sy0 + 2, kd, kd, 5, lerp(0xFFDDDDDD, 0xFFFFFFFF, hvr));
-				} else {
+				{
 				// Action skin: yellow "I" side when on, knob slides smoothly
 				g.fill(sx0 - 1, sy0 - 1, sx0 + swW + 1, sy0 + swH + 1, 0xFF111111);
 				g.fill(sx0, sy0, sx0 + swW, sy0 + swH, 0xFF2E2E2E);
