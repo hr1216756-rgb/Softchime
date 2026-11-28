@@ -494,7 +494,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		int bodyY = py + 18, bodyH = ph - 20;
-		int sw0 = flat ? Math.max(62, Math.min(92, pw * 22 / 100)) : Math.max(74, Math.min(104, pw * 27 / 100));
+		int sw0 = flat ? Math.max(72, Math.min(112, pw * 26 / 100)) : Math.max(74, Math.min(104, pw * 27 / 100));
 		int sbx = px + 4;
 		rr(g, sbx, bodyY, sw0, bodyH, 4, DEEP);
 
@@ -507,14 +507,14 @@ public class ConfigScreen extends Screen {
 		// ---- sidebar
 		int y = bodyY + 4;
 		if (flat) { // Action skin: the banner image supplied by the user
-			int bw = sw0 - 8, bh = bw * 536 / 960;
-			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 960, 536, 960, 536);
+			int bw = sw0 - 2, bh = bw * 536 / 960;
+			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 1, y, 0, 0, bw, bh, 960, 536, 960, 536);
 			if (c.animations) { // shine sweeps across the banner every few seconds
 				float sp = (t % 4f) / 0.8f;
 				if (sp < 1f) {
 					int bxs = sbx + 4 + (int) (sp * (bw + 24)) - 12;
 					for (int sk = 0; sk < 5; sk++) {
-						int x0 = Math.max(sbx + 4, bxs + sk * 2), x1 = Math.min(sbx + 4 + bw, bxs + sk * 2 + 2);
+						int x0 = Math.max(sbx + 1, bxs + sk * 2), x1 = Math.min(sbx + 1 + bw, bxs + sk * 2 + 2);
 						if (x1 > x0) g.fill(x0, y, x1, y + bh, ((int) (60 * (1 - Math.abs(sk - 2) / 3f)) << 24) | 0xFFFFFF);
 					}
 				}
