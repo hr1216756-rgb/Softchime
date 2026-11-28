@@ -17,6 +17,33 @@ public final class Icons {
 		draw(g, ART[s.ordinal()], x, y, scale, alpha, true);
 	}
 
+	private static int mix(int a, int b, float t) {
+		int r = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
+		int g = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
+		int bl = (int) ((a & 255) * (1 - t) + (b & 255) * t);
+		return 0xFF000000 | (r << 16) | (g << 8) | bl;
+	}
+
+	/** Flat colour tile with a light glyph (Action skin icons). */
+	public static void styleTile(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int tileRgb) {
+		int base = 0xFF000000 | (tileRgb & 0xFFFFFF);
+		g.fill(x - 1, y - 1, x + 17, y + 17, mix(base, 0xFF000000, 0.5f));
+		g.fill(x, y, x + 16, y + 16, mix(base, 0xFF000000, 0.12f));
+		g.fill(x, y, x + 16, y + 1, mix(base, 0xFFFFFFFF, 0.4f));
+		g.fill(x, y, x + 1, y + 16, mix(base, 0xFFFFFFFF, 0.2f));
+		String[] rows = ART[st.ordinal()];
+		for (int j = 0; j < rows.length; j++) {
+			String row = rows[j];
+			for (int i = 0; i < row.length(); i++) {
+				char c = row.charAt(i);
+				if (c == '.') continue;
+				int col = color(c);
+				int lum = (((col >> 16) & 255) * 3 + ((col >> 8) & 255) * 6 + (col & 255)) / 10;
+				g.fill(x + i, y + j, x + i + 1, y + j + 1, lum >= 130 ? 0xFFFFFFFF : mix(base, 0xFF000000, 0.55f));
+			}
+		}
+	}
+
 	/** 32x32 mod logo. */
 	public static void logo(GuiGraphicsExtractor g, int x, int y, int scale) {
 		draw(g, LOGO, x, y, scale, 255, false);

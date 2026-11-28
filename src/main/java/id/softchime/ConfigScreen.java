@@ -84,6 +84,9 @@ public class ConfigScreen extends Screen {
 	private int hoverId = -1;
 	private long lastActionNs = 0;
 	private int lastActionId = -1;
+	private int pressId = -1;
+	private long pressNs = 0;
+	private float selY = -1, volShown = -1;
 	private boolean wasDown = false;
 	private long tabStartNs = System.nanoTime();
 	private int pw, ph, px, py;
@@ -162,12 +165,14 @@ public class ConfigScreen extends Screen {
 		if (id == lastActionId && now - lastActionNs < guard) return; // de-duplicate event + polling paths
 		if (id != lastActionId && now - lastActionNs < 40_000_000L) return;
 		lastActionNs = now; lastActionId = id;
+		pressId = id; pressNs = now;
 		Config c = Config.INSTANCE;
 		if (id != 20 && dragging) { dragging = false; lastTickStep = -1; Config.save(); }
 		if (id >= 60 && id < 64) { if (tab != id - 60) { tab = id - 60; tabStartNs = now; } click(); }
 		else if (id == 80 || id == 81) {
 			int n = items().size();
 			scroll[tab] = Math.max(0, Math.min(n - 1, scroll[tab] + (id == 81 ? 1 : -1)));
+			tabStartNs = now;
 			click();
 		}
 		else if (id == 82) {
@@ -367,6 +372,11 @@ public class ConfigScreen extends Screen {
 		g.fill(x + w - 1, y, x + w, y + h, lerp(c, 0xFF000000, 0.35f));
 	}
 
+	private static void icon(GuiGraphicsExtractor g, SoundStyle st, int x, int y, int accent) {
+		if (flat) Icons.styleTile(g, st, x, y, accent);
+		else Icons.style(g, st, x, y, 1, 255);
+	}
+
 	private static int contrast(int bg) {
 		int lum = (((bg >> 16) & 255) * 3 + ((bg >> 8) & 255) * 6 + (bg & 255)) / 10;
 		return lum > 150 ? 0xFF161616 : 0xFFFFFFFF;
@@ -479,6 +489,16 @@ public class ConfigScreen extends Screen {
 		if (flat) { // Action skin: the banner image supplied by the user
 			int bw = sw0 - 8, bh = bw * 157 / 276;
 			g.blit(RenderPipelines.GUI_TEXTURED, BANNER, sbx + 4, y, 0, 0, bw, bh, 414, 235, 414, 235);
+			if (c.animations) { // shine sweeps across the banner every few seconds
+				float sp = (t % 4f) / 0.8f;
+				if (sp < 1f) {
+					int bxs = sbx + 4 + (int) (sp * (bw + 24)) - 12;
+					for (int k = 0; k < 5; k++) {
+						int x0 = Math.max(sbx + 4, bxs + k * 2), x1 = Math.min(sbx + 4 + bw, bxs + k * 2 + 2);
+						if (x1 > x0) g.fill(x0, y, x1, y + bh, ((int) (60 * (1 - Math.abs(k - 2) / 3f)) << 24) | 0xFFFFFF);
+					}
+				}
+			}
 			y += bh + 4;
 		} else if (bodyH >= 170) {
 			rrGrad(g, sbx + 4, y, sw0 - 8, 36, 4, lerp(MINT, CARD, 0.6f), lerp(PINK, CARD, 0.6f));
@@ -491,14 +511,19 @@ public class ConfigScreen extends Screen {
 		rr(g, done.x, done.y + 1, done.w, done.h, 4, 0xFFB5902A);
 		btn(g, done.x, done.y, done.w, done.h, 4, lerp(YEL, 0xFFFFFFFF, hv(50) * 0.4f));
 		textC(g, "DONE", done.x + done.w / 2, done.y + 3, DARK);
+		if (c.animations) g.outline(done.x - 1, done.y - 1, done.w + 2, done.h + 2, (((int) (40 + 70 * (0.5 + 0.5 * Math.sin(t * 3)))) << 24) | (YEL & 0xFFFFFF));
 		y += 19;
 		for (int i = 0; i < 4; i++) {
 			Hit th = add(sbx + 2, y, sw0 - 4, 18, 60 + i);
 			boolean sel = tab == i;
-			if (sel) rr(g, th.x, th.y, th.w, th.h, 3, SIDESEL);
+			if (sel) {
+				if (selY < 0) selY = th.y;
+				selY += (th.y - selY) * Math.min(1f, dt * 16f); // glides to the chosen category
+				rr(g, th.x, Math.round(selY), th.w, th.h, 3, SIDESEL);
+				g.fill(th.x, Math.round(selY) + 3, th.x + 2, Math.round(selY) + th.h - 3, YEL);
+			}
 			else if (hv(60 + i) > 0.02f) rr(g, th.x, th.y, th.w, th.h, 3, lerp(DEEP, SIDESEL, hv(60 + i)));
-			if (sel) g.fill(th.x, th.y + 3, th.x + 2, th.y + th.h - 3, YEL);
-			Icons.style(g, TAB_ICON[i], th.x + 5, th.y + 1, 1, 255);
+			icon(g, TAB_ICON[i], th.x + 5, th.y + 1, ACCENT[TAB_ICON[i].ordinal()]);
 			tx(g, font, TAB_NAMES[i], th.x + 25, th.y + 5, sel ? WHITE : MUTED);
 			y += 19;
 		}
@@ -537,6 +562,21 @@ public class ConfigScreen extends Screen {
 			yy += it.h + 2;
 			idx++;
 		}
+		if (c.animations) {
+			for (Hit ht : hits) {
+				float hvv = hv(ht.id);
+				if (ht.id >= 60 && ht.id < 64) continue;
+				if (hvv > 0.03f && ht.h >= 12 && ht.h <= 24 && ht.w >= 20) { // underline grows from the centre
+					int lw = (int) (ht.w * hvv);
+					g.fill(ht.x + (ht.w - lw) / 2, ht.y + ht.h - 1, ht.x + (ht.w + lw) / 2, ht.y + ht.h, 0xFF000000 | (YEL & 0xFFFFFF));
+				}
+			}
+			if (pressId >= 0) { // quick flash when something is tapped
+				float pp = (now - pressNs) / 220_000_000f;
+				Hit ph2 = hit(pressId);
+				if (ph2 != null && pp >= 0 && pp < 1) g.fill(ph2.x, ph2.y, ph2.x + ph2.w, ph2.y + ph2.h, ((int) (110 * (1 - pp)) << 24) | 0xFFFFFF);
+			}
+		}
 		boolean canUp = scroll[tab] > 0, canDown = idx < items.size();
 		for (int i = 0; i < 2; i++) {
 			boolean up = i == 0, en = up ? canUp : canDown;
@@ -560,7 +600,7 @@ public class ConfigScreen extends Screen {
 		Config c = Config.INSTANCE;
 		switch (it.kind) {
 			case 0 -> {
-				Icons.style(g, SoundStyle.values()[it.a], x, y + 3, 1, 255);
+				icon(g, SoundStyle.values()[it.a], x, y + 3, ACCENT[it.a]);
 				tx(g, font, it.s1, x + 20, y + 3, WHITE);
 				tx(g, font, fit(font, it.s2, w - 22), x + 20, y + 13, MUTED);
 			}
@@ -587,7 +627,7 @@ public class ConfigScreen extends Screen {
 					}
 					g.fill(cx + 1, cy + 4, cx + 2, cy + hh.h - 4, ACCENT[i]);
 					int bounce = (int) (Math.sin(pulse[i] * Math.PI) * 3);
-					Icons.style(g, SoundStyle.values()[i], cx + 3, cy + (hh.h - 16) / 2 - bounce, 1, 255);
+					icon(g, SoundStyle.values()[i], cx + 3, cy + (hh.h - 16) / 2 - bounce, ACCENT[i]);
 					tx(g, font, fit(font, NAMES[i], cw4 - 22), cx + 21, cy + (hh.h - 8) / 2, TXT);
 					if (sel) for (int b = 0; b < 3; b++) {
 						int bh = 1 + (int) (Math.abs(Math.sin(t * 6 + b * 1.7)) * 4);
@@ -608,7 +648,9 @@ public class ConfigScreen extends Screen {
 				sx = x + 20; sw = pl.x - 4 - sx; sy = y + 10;
 				add(sx - 4, y, sw + 8, it.h, 20);
 				rr(g, sx, sy, sw, 6, 3, DEEP);
-				int kx = sx + 6 + Math.round(c.volume * (sw - 12));
+				if (volShown < 0) volShown = c.volume;
+				volShown += (c.volume - volShown) * Math.min(1f, 0.35f);
+				int kx = sx + 6 + Math.round(volShown * (sw - 12));
 				for (int i = 0; i < kx - sx; i++) g.fill(sx + i, sy + 1, sx + i + 1, sy + 5, lerp(MINT, YEL, i / (float) Math.max(1, sw)));
 				rr(g, kx - 6, sy - 3, 12, 12, 6, PINK);
 				rr(g, kx - 5, sy - 2, 10, 10, 5, WHITE);
@@ -632,7 +674,7 @@ public class ConfigScreen extends Screen {
 				Toggle tg = toggles.get(it.a);
 				float s = swT[it.a];
 				if (flat) {
-					Icons.style(g, SoundStyle.values()[(it.a * 3 + 1) % NS], x + 2, y + 2, 1, 255);
+					icon(g, SoundStyle.values()[(it.a * 3 + 1) % NS], x + 2, y + 2, ACCENT[(it.a * 3 + 1) % NS]);
 					g.fill(x, y + it.h - 1, x + w, y + it.h, 0xFF1F1F1F);
 					tx(g, font, tg.label, x + 22, y + 2, WHITE);
 					tx(g, font, fit(font, tg.desc, w - 24), x + 22, y + 12, MUTED);
