@@ -725,7 +725,12 @@ public class ConfigScreen extends Screen {
 				int swW = 38, swH = 14, sx0 = x + w - swW - 6, sy0 = y + (it.h - 2 - swH) / 2;
 				tx(g, font, fit(font, tg.label, sx0 - x - 30), x + 26, y + 3, flat ? WHITE : TXT);
 				tx(g, font, fit(font, tg.desc, sx0 - x - 30), x + 26, y + 13, flat ? MUTED : MUTED2);
-				// switch: orange "I" side when on, knob slides smoothly
+				if (!flat) { // other themes: rounded pill in the theme colour
+					rr(g, sx0, sy0, swW, swH, 7, lerp(DEEP, MINT, sw1));
+					int kd = swH - 4, kx2 = sx0 + 2 + Math.round(sw1 * (swW - kd - 4));
+					rr(g, kx2, sy0 + 2, kd, kd, 5, lerp(0xFFDDDDDD, 0xFFFFFFFF, hvr));
+				} else {
+				// Action skin: yellow "I" side when on, knob slides smoothly
 				g.fill(sx0 - 1, sy0 - 1, sx0 + swW + 1, sy0 + swH + 1, 0xFF111111);
 				g.fill(sx0, sy0, sx0 + swW, sy0 + swH, 0xFF2E2E2E);
 				int half = swW / 2, kx = sx0 + Math.round(sw1 * half);
@@ -736,6 +741,7 @@ public class ConfigScreen extends Screen {
 				if (sw1 > 0.5f) g.fill(sx0 + half / 2 - 1, sy0 + 4, sx0 + half / 2, sy0 + swH - 4, 0xFF3A2A00);
 				else { int ox = sx0 + half + half / 2 - 2; g.outline(ox, sy0 + 4, 4, swH - 8, 0xFFCCCCCC); }
 				btn(g, kx, sy0, half, swH, 2, lerp(0xFFCFCFCF, 0xFFFFFFFF, hvr * 0.6f));
+				}
 			}
 			case 5 -> {
 				int tw3 = (w - 6) / 3;
