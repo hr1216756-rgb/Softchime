@@ -493,9 +493,9 @@ public class ConfigScreen extends Screen {
 				float sp = (t % 4f) / 0.8f;
 				if (sp < 1f) {
 					int bxs = sbx + 4 + (int) (sp * (bw + 24)) - 12;
-					for (int k = 0; k < 5; k++) {
-						int x0 = Math.max(sbx + 4, bxs + k * 2), x1 = Math.min(sbx + 4 + bw, bxs + k * 2 + 2);
-						if (x1 > x0) g.fill(x0, y, x1, y + bh, ((int) (60 * (1 - Math.abs(k - 2) / 3f)) << 24) | 0xFFFFFF);
+					for (int sk = 0; sk < 5; sk++) {
+						int x0 = Math.max(sbx + 4, bxs + sk * 2), x1 = Math.min(sbx + 4 + bw, bxs + sk * 2 + 2);
+						if (x1 > x0) g.fill(x0, y, x1, y + bh, ((int) (60 * (1 - Math.abs(sk - 2) / 3f)) << 24) | 0xFFFFFF);
 					}
 				}
 			}
